@@ -1,0 +1,11 @@
+# Бэкапы базы НИКОГДА не выкладываем в репозиторий:
+# внутри логины, зашифрованные пароли и соль шифрования.
+ai-platforms-backup-*.json
+ai-platforms-public-*.json
+*-backup-*.json
+vault*.json
+
+# Системный мусор Windows / macOS
+Thumbs.db
+desktop.ini
+.DS_Store
