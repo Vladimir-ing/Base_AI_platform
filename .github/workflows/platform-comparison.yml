@@ -1,0 +1,46 @@
+name: Platform comparison upgrade
+
+on:
+  push:
+    branches:
+      - agent/platform-comparison
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/platform-comparison
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply upgrade
+        run: python tools/upgrade_platform_comparison.py
+      - name: Check JavaScript syntax
+        run: node --check assets/app.js
+      - name: Structural checks
+        run: |
+          grep -q 'id="compareBtn"' ai-platforms.html
+          grep -q 'async function flowComparePlatforms()' assets/app.js
+          grep -q 'function compareTable(platforms)' assets/app.js
+          grep -q 'максимум четыре платформы' assets/app.js
+          grep -q '.compare-table-wrap{' assets/app.css
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet; then
+            echo 'No generated changes'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ai-platforms.html assets/app.js assets/app.css
+          git commit -m 'Add platform comparison mode'
+          git push origin HEAD:agent/platform-comparison
