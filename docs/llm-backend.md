@@ -48,9 +48,9 @@ The Edge Function:
 - limits question and catalog sizes;
 - calls the OpenAI Responses API server-side with `store: false`;
 - returns answer text plus a small list of platform ids so the UI can render clickable recommendations.
-- records request status and token counts for admin statistics, but never stores the question, answer, catalog payload, login, or secret;
-- reads the server-managed product mode and plan. During free preview, each non-admin user can make up to 20 LLM requests per UTC calendar month;
+- records request status and token counts, but never stores the question, answer, catalog payload, login, or secret;
+- reads the server-managed product mode and plan. During free preview, each user can make up to 20 LLM requests per UTC calendar month;
 - atomically reserves one monthly request for the user before calling OpenAI, so concurrent requests cannot bypass the 20-request preview limit;
 - caps model output at 1,200 tokens and records calculated token cost after completion.
 
-The calculation uses the configured model token rates and is intentionally conservative. The authoritative prepaid credit balance remains in the OpenAI billing dashboard; the admin page links to it directly.
+The calculation uses the configured model token rates and is intentionally conservative.

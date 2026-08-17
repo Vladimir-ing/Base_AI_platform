@@ -63,13 +63,14 @@ Deno.serve(async (req: Request) => {
     if (listed.data.users.length < 1000) break;
   }
 
-  const [accessResult, usageResult, plansResult, settingsResult] = await Promise.all([
+  const [accessResult, usageResult, plansResult, settingsResult, adminReadmeResult] = await Promise.all([
     server.from("user_access").select("user_id,status,plan,is_admin,trial_started_at,trial_ends_at,subscribed_at,current_period_end,cancel_at_period_end,billing_interval,last_seen_at,created_at"),
     server.from("llm_usage_events").select("user_id,status,total_tokens,estimated_cost_usd,actual_cost_usd,budget_day,created_at").gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()),
     server.from("billing_plans").select("code,name,platform_limit,llm_monthly_limit,monthly_price_usd,annual_monthly_price_usd,annual_price_usd,sort_order").eq("is_active", true).order("sort_order"),
     server.from("product_settings").select("billing_enabled,free_preview_enabled,free_preview_llm_monthly_limit,trial_days,llm_input_usd_per_million,llm_output_usd_per_million,llm_max_output_tokens,updated_at").eq("singleton", true).single(),
+    server.rpc("get_admin_document", { p_slug: "readme" }),
   ]);
-  if (accessResult.error || usageResult.error || plansResult.error || settingsResult.error) return json(req, { error: "dashboard_unavailable" }, 503);
+  if (accessResult.error || usageResult.error || plansResult.error || settingsResult.error || adminReadmeResult.error) return json(req, { error: "dashboard_unavailable" }, 503);
 
   const now = Date.now();
   const accessByUser = new Map((accessResult.data || []).map((row: any) => [row.user_id, row]));
@@ -141,6 +142,7 @@ Deno.serve(async (req: Request) => {
     },
     plans: plansResult.data || [],
     settings: settingsResult.data,
+    admin_readme: adminReadmeResult.data || "",
     users,
   });
 });

@@ -26,6 +26,13 @@ function renderCosts(summary) {
   $("#costPanel").hidden=false;
 }
 
+function renderAdminReadme() {
+  const content=String(dashboard?.admin_readme||"").trim();
+  if(!content)return;
+  $("#adminReadme").textContent=content;
+  $("#adminReadmePanel").hidden=false;
+}
+
 function renderPlans() {
   $("#productMode").textContent = dashboard?.settings?.free_preview_enabled ? "Бесплатный доступ включён; до "+number(dashboard.settings.free_preview_llm_monthly_limit)+" LLM-запросов на пользователя в месяц" : "Тарифные ограничения включены";
   $("#planGrid").innerHTML = (dashboard?.plans || []).map(plan => {
@@ -50,7 +57,7 @@ async function loadDashboard() {
   $("#refreshBtn").disabled=true; $("#adminMessage").hidden=false; $("#adminMessage").className="admin-message"; $("#adminMessage").textContent="Загружаю статистику…";
   const {data,error}=await window.supabaseClient.functions.invoke("admin-dashboard",{body:{}}); $("#refreshBtn").disabled=false;
   if(error||!data){let code=error?.message||"dashboard_unavailable";if(error?.context&&typeof error.context.json==="function"){try{code=(await error.context.json())?.error||code}catch(_){}}if(code==="forbidden"){window.location.replace("ai-platforms.html");return}$("#adminMessage").className="admin-message error";$("#adminMessage").textContent="Не удалось загрузить админ-панель: "+code;return}
-  dashboard=data; $("#adminMessage").hidden=true; $("#usersPanel").hidden=false; $("#generatedAt").textContent="Обновлено: "+formatDate(data.generated_at,true); renderStats(data.summary); renderCosts(data.summary); renderPlans(); renderUsers();
+  dashboard=data; $("#adminMessage").hidden=true; $("#usersPanel").hidden=false; $("#generatedAt").textContent="Обновлено: "+formatDate(data.generated_at,true); renderStats(data.summary); renderCosts(data.summary); renderAdminReadme(); renderPlans(); renderUsers();
 }
 
 $("#userSearch").addEventListener("input",renderUsers); $("#statusFilter").addEventListener("change",renderUsers); $("#refreshBtn").addEventListener("click",loadDashboard); loadDashboard();

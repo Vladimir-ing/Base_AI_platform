@@ -22,6 +22,10 @@
     <div class="budget-copy"><span>Расходы LLM сегодня (UTC)</span><strong id="costToday">—</strong><small id="costDetails">—</small></div>
     <a class="btn" href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Баланс OpenAI ↗</a>
   </section>
+  <details class="admin-panel admin-readme" id="adminReadmePanel" hidden>
+    <summary>README администратора</summary>
+    <pre id="adminReadme"></pre>
+  </details>
   <section class="admin-panel" id="plansPanel" hidden><div class="admin-panel-head"><div><h2>Будущие тарифы</h2><p id="productMode">Цены сохранены, продажи пока выключены</p></div></div><div class="plan-grid" id="planGrid"></div></section>
   <section class="admin-panel" id="usersPanel" hidden>
     <div class="admin-panel-head"><div><h2>Пользователи</h2><p id="generatedAt"></p></div><div class="admin-tools"><input id="userSearch" type="search" placeholder="Поиск по email"><select id="statusFilter"><option value="">Все статусы</option><option value="preview">Бесплатный доступ</option><option value="trialing">Trial</option><option value="active">Активные</option><option value="past_due">Просрочка</option><option value="canceled">Отменённые</option></select><button class="btn" id="refreshBtn" type="button">Обновить</button></div></div>
