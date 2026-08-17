@@ -40,7 +40,8 @@
     if (gate) gate.hidden = true;
 
     const appScript = document.createElement("script");
-    appScript.src = document.body.dataset.appScript || "assets/app.js";
+    const appSource = document.body.dataset.appScript || "assets/app.js";
+    appScript.src = appSource + (appSource.includes("?") ? "&" : "?") + "v=20260817-0835";
     appScript.async = false;
     appScript.onerror = () => {
       if (gate) {
