@@ -44,3 +44,5 @@ jobs:
           git add ai-platforms.html assets/app.js assets/app.css
           git commit -m 'Add subscription economics dashboard'
           git push origin HEAD:agent/subscription-economics
+
+# Rerun marker: fixed attention section selector.
