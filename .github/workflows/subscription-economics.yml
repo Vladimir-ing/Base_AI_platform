@@ -1,0 +1,46 @@
+name: Subscription economics upgrade
+
+on:
+  push:
+    branches:
+      - agent/subscription-economics
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/subscription-economics
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply upgrade
+        run: python tools/upgrade_subscription_economics.py
+      - name: Check JavaScript syntax
+        run: node --check assets/app.js
+      - name: Structural checks
+        run: |
+          grep -q 'id="economics"' ai-platforms.html
+          grep -q 'function subscriptionEconomics()' assets/app.js
+          grep -q 'function valueVerdict(p)' assets/app.js
+          grep -q 'Ценность подписки' assets/app.js
+          grep -q '.economics-head{' assets/app.css
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet; then
+            echo 'No generated changes'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ai-platforms.html assets/app.js assets/app.css
+          git commit -m 'Add subscription economics dashboard'
+          git push origin HEAD:agent/subscription-economics
