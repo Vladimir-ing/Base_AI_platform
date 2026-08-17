@@ -1940,7 +1940,7 @@ function showHelp() {
         <div><dt>Только локально</dt><dd>Данные остались в браузере и отправятся после восстановления сети.</dd></div>
       </dl></div>
       <div class="sect"><h4>Важно</h4><p>Мастер-пароль восстановить невозможно. Не храните номера карт, CVV, коды из СМС и паспортные данные. Для карты достаточно понятной метки.</p></div>
-      <a class="guide-link" href="https://github.com/Vladimir-ing/Base_AI_platform#readme" target="_blank" rel="noopener noreferrer">Открыть полное руководство на GitHub ↗</a>`,
+      <a class="guide-link" href="guide.html" target="_blank" rel="noopener noreferrer">Открыть полное руководство ↗</a>`,
     buttons: [{ spacer: true }, { label: "Понятно", value: null, variant: "primary" }]
   });
 }
