@@ -45,6 +45,8 @@ h1,h2,h3,h4{margin:0;line-height:1.25}
 .btn.danger{color:var(--danger);border-color:var(--dangerSoft);background:var(--dangerSoft)}
 .btn.sm{padding:6px 10px;font-size:13px;border-radius:9px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+.guide-btn{color:var(--accTxt);background:var(--accSoft);border-color:transparent}
+.guide-btn:hover{border-color:var(--acc)}
 .menu{position:relative}
 .menu>summary{list-style:none;cursor:pointer}
 .menu>summary::-webkit-details-marker{display:none}
@@ -135,6 +137,7 @@ h1,h2,h3,h4{margin:0;line-height:1.25}
 .ov[hidden]{display:none}
 .sheet{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);width:100%;max-width:720px;border:1px solid var(--line);animation:pop .16s ease-out}
 .sheet.narrow{max-width:440px}
+.sheet.narrow:has(.guide-intro){max-width:700px}
 @keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
 .sheet-head{display:flex;gap:12px;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);border-radius:18px 18px 0 0;z-index:2}
 .sheet-head .ico{width:42px;height:42px;border-radius:12px;background:var(--accSoft);display:grid;place-items:center;font-size:21px;flex:none}
@@ -151,6 +154,18 @@ h1,h2,h3,h4{margin:0;line-height:1.25}
 .sect p{margin:0 0 8px;white-space:pre-wrap}
 .sect ul{margin:0;padding-left:20px}
 .sect ul li{margin-bottom:5px}
+.guide-intro{margin:0 0 14px;color:var(--muted)}
+.guide-steps{display:grid;gap:9px;margin-bottom:18px}
+.guide-step{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:var(--panel2)}
+.guide-step>span{width:25px;height:25px;border-radius:8px;background:var(--acc);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700}
+.guide-step b{display:block;font-size:13.5px;margin-bottom:2px}
+.guide-step p{margin:0;color:var(--muted);font-size:12.5px;white-space:normal}
+.guide-status{display:grid;gap:7px;margin:0}
+.guide-status div{display:grid;grid-template-columns:122px 1fr;gap:10px;font-size:13px}
+.guide-status dt{font-weight:600}
+.guide-status dd{margin:0;color:var(--muted)}
+.guide-link{display:block;text-align:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);text-decoration:none;font-weight:600}
+.guide-link:hover{border-color:var(--acc)}
 .kv{display:grid;grid-template-columns:170px 1fr;gap:7px 14px;font-size:14px}
 .kv dt{color:var(--muted)}
 .kv dd{margin:0;overflow-wrap:anywhere}
@@ -183,6 +198,7 @@ h1,h2,h3,h4{margin:0;line-height:1.25}
   .kv{grid-template-columns:1fr;gap:2px 0}
   .kv dt{margin-top:7px}
   .brand h1{font-size:16px}
+  .guide-status div{grid-template-columns:1fr;gap:1px}
 }
 
 /* toast */
