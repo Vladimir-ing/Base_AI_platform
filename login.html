@@ -5,65 +5,70 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Вход — AI CORE</title>
 <link rel="stylesheet" href="assets/app.css?v=20260817-0945">
-<link rel="stylesheet" href="assets/auth.css?v=20260817-0945">
+<link rel="stylesheet" href="assets/auth.css?v=20260817-1800">
 </head>
 <body class="auth-page">
 <main class="auth-shell">
+  <div class="auth-toolbar" aria-label="Language">
+    <button type="button" data-language="ru" aria-pressed="true">RU</button>
+    <button type="button" data-language="en" aria-pressed="false">EN</button>
+  </div>
+
   <section class="auth-card" aria-labelledby="authTitle">
     <div class="auth-brand">
       <div class="auth-brand-mark">◆</div>
       <div>
         <h1 id="authTitle">AI CORE</h1>
-        <p>Войдите, чтобы открыть личную базу AI-платформ</p>
+        <p data-ru="Войдите, чтобы открыть личную базу AI-платформ" data-en="Sign in to open your personal AI platform database">Войдите, чтобы открыть личную базу AI-платформ</p>
       </div>
     </div>
 
     <div class="auth-tabs" id="authTabs" role="tablist" aria-label="Способ доступа">
-      <button class="auth-tab active" type="button" role="tab" aria-selected="true" data-auth-view="login">Вход</button>
-      <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-view="signup">Регистрация</button>
+      <button class="auth-tab active" type="button" role="tab" aria-selected="true" data-auth-view="login" data-ru="Вход" data-en="Sign In">Вход</button>
+      <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-view="signup" data-ru="Регистрация" data-en="Sign Up">Регистрация</button>
     </div>
 
     <form class="auth-form" id="loginForm" data-auth-panel="login">
       <label for="loginEmail">Email</label>
       <input id="loginEmail" name="email" type="email" autocomplete="email" required>
-      <label for="loginPassword">Пароль</label>
+      <label for="loginPassword" data-ru="Пароль" data-en="Password">Пароль</label>
       <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
-      <button class="btn primary auth-submit" type="submit">Войти</button>
-      <button class="auth-link" id="forgotBtn" type="button">Забыли пароль?</button>
+      <button class="btn primary auth-submit" type="submit" data-ru="Войти" data-en="Sign In">Войти</button>
+      <button class="auth-link" id="forgotBtn" type="button" data-ru="Забыли пароль?" data-en="Forgot password?">Забыли пароль?</button>
     </form>
 
     <form class="auth-form" id="signupForm" data-auth-panel="signup" hidden>
       <label for="signupEmail">Email</label>
       <input id="signupEmail" name="email" type="email" autocomplete="email" required>
-      <label for="signupPassword">Пароль</label>
+      <label for="signupPassword" data-ru="Пароль" data-en="Password">Пароль</label>
       <input id="signupPassword" name="password" type="password" autocomplete="new-password" minlength="8" required>
-      <small>Минимум 8 символов.</small>
-      <button class="btn primary auth-submit" type="submit">Создать аккаунт</button>
+      <small data-ru="Минимум 8 символов." data-en="At least 8 characters.">Минимум 8 символов.</small>
+      <button class="btn primary auth-submit" type="submit" data-ru="Создать аккаунт" data-en="Create Account">Создать аккаунт</button>
     </form>
 
     <form class="auth-form" id="recoveryForm" data-auth-panel="recovery" hidden>
-      <h2>Восстановление пароля</h2>
-      <p>Укажите email — Supabase отправит ссылку для смены пароля.</p>
+      <h2 data-ru="Восстановление пароля" data-en="Password recovery">Восстановление пароля</h2>
+      <p data-ru="Укажите email — Supabase отправит ссылку для смены пароля." data-en="Enter your email and Supabase will send a password reset link.">Укажите email — Supabase отправит ссылку для смены пароля.</p>
       <label for="recoveryEmail">Email</label>
       <input id="recoveryEmail" name="email" type="email" autocomplete="email" required>
-      <button class="btn primary auth-submit" type="submit">Отправить ссылку</button>
-      <button class="auth-link" type="button" data-auth-view="login">Вернуться ко входу</button>
+      <button class="btn primary auth-submit" type="submit" data-ru="Отправить ссылку" data-en="Send Reset Link">Отправить ссылку</button>
+      <button class="auth-link" type="button" data-auth-view="login" data-ru="Вернуться ко входу" data-en="Back to sign in">Вернуться ко входу</button>
     </form>
 
     <form class="auth-form" id="newPasswordForm" data-auth-panel="new-password" hidden>
-      <h2>Новый пароль</h2>
-      <label for="newPassword">Пароль</label>
+      <h2 data-ru="Новый пароль" data-en="New password">Новый пароль</h2>
+      <label for="newPassword" data-ru="Пароль" data-en="Password">Пароль</label>
       <input id="newPassword" name="password" type="password" autocomplete="new-password" minlength="8" required>
-      <button class="btn primary auth-submit" type="submit">Сохранить пароль</button>
+      <button class="btn primary auth-submit" type="submit" data-ru="Сохранить пароль" data-en="Save Password">Сохранить пароль</button>
     </form>
 
     <div class="auth-message" id="authMessage" role="status" aria-live="polite" hidden></div>
   </section>
-  <p class="auth-credit">Продукт <a href="altera.html" target="_blank" rel="noopener noreferrer">ALTERA ↗</a></p>
+  <p class="auth-credit"><span data-ru="Продукт" data-en="A product by">Продукт</span> <a href="altera.html" target="_blank" rel="noopener noreferrer">ALTERA ↗</a></p>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js"></script>
 <script src="assets/supabase-client.js?v=20260817-0945"></script>
-<script src="assets/auth-page.js?v=20260817-1020"></script>
+<script src="assets/auth-page.js?v=20260817-1800"></script>
 </body>
 </html>
