@@ -13,15 +13,19 @@ repls={
 '<a class="btn primary" href="ai-platforms.html" data-copy="ctaBtn">':'<a class="btn primary" href="auth.html?mode=signup" data-copy="ctaBtn">',
 }
 for old,new in repls.items():
-    if old not in t: raise SystemExit(f'missing landing marker: {old}')
-    t=t.replace(old,new,1)
+    if old in t:
+        t=t.replace(old,new,1)
+    elif new not in t:
+        raise SystemExit(f'missing landing marker: {old}')
 index.write_text(t,encoding='utf-8')
 
 t=dash.read_text(encoding='utf-8')
 old='<script src="assets/app.js"></script>'
 new='<script src="assets/supabase-config.js"></script>\n<script type="module" src="assets/dashboard-auth.js"></script>\n<script src="assets/app.js"></script>'
-if old not in t: raise SystemExit('missing dashboard script marker')
-t=t.replace(old,new,1)
+if new not in t:
+    if old not in t:
+        raise SystemExit('missing dashboard script marker')
+    t=t.replace(old,new,1)
 dash.write_text(t,encoding='utf-8')
 
 c=css.read_text(encoding='utf-8')
