@@ -54,10 +54,8 @@ Deno.serve(async (req: Request) => {
     return json(req, { error: "unauthorized" }, 401);
   }
 
-  const publishableKeyNames = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") || "{}");
-  const publishableKeyName = publishableKeyNames.default || "";
-  const publishableKey = (publishableKeyName && Deno.env.get(publishableKeyName)) ||
-    Deno.env.get("SUPABASE_ANON_KEY") || "";
+  const publishableKeys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") || "{}");
+  const publishableKey = publishableKeys.default || Deno.env.get("SUPABASE_ANON_KEY") || "";
   const supabase = createClient(Deno.env.get("SUPABASE_URL") || "", publishableKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
