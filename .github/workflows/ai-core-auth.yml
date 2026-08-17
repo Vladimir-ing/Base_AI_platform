@@ -36,8 +36,8 @@ jobs:
           grep -q 'signInWithPassword' assets/auth.js
           grep -q 'signUp' assets/auth.js
           grep -q 'signOut' assets/dashboard-auth.js
-          grep -q 'PASTE_SB_PUBLISHABLE_KEY_HERE' assets/supabase-config.js
-          ! grep -R -E 'service_role|sb_secret_' assets auth.html index.html ai-platforms.html
+          grep -q 'sb_publishable_' assets/supabase-config.js
+          ! grep -R -E 'PASTE_SB_PUBLISHABLE_KEY_HERE|service_role|sb_secret_' assets auth.html index.html ai-platforms.html
       - name: Commit generated changes
         run: |
           if ! git diff --quiet; then
