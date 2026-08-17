@@ -195,3 +195,21 @@ h1,h2,h3,h4{margin:0;line-height:1.25}
 .choice:hover{border-color:var(--acc)}
 .choice b{display:block;font-size:14.5px}
 .choice span{font-size:12.5px;color:var(--muted)}
+
+
+/* ---------- subscription economics ---------- */
+#economics{margin-bottom:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.economics-head{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap}
+.economics-head h2{font-size:16px}
+.economics-head p{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+.saving{text-align:right}
+.saving span{display:block;font-size:11.5px;color:var(--muted)}
+.saving b{font-size:18px}
+.economics-list{display:grid;gap:7px}
+.economics-row{display:flex;justify-content:space-between;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:var(--panel2);border-radius:11px;padding:10px 12px;cursor:pointer}
+.economics-row:hover{border-color:var(--acc)}
+.economics-row span{min-width:0}
+.economics-row b{display:block;font-size:14px}
+.economics-row small{display:block;margin-top:2px;color:var(--muted);font-size:12px}
+.economics-row strong{white-space:nowrap;font-size:13px}
+@media (max-width:640px){.saving{text-align:left}.economics-row{align-items:flex-start}.economics-row strong{font-size:12px}}

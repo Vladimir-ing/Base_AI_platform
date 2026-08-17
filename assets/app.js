@@ -636,6 +636,53 @@ function renderAttention() {
     ).join("") + "</div>";
 }
 
+
+function subscriptionEconomics() {
+  const candidates = state.platforms
+    .map(p => ({ p: p, monthly: monthlyCost(p) }))
+    .filter(x => x.monthly > 0 && (x.p.usage === "Редко" || x.p.usage === "Не использую"))
+    .sort((a, b) => b.monthly - a.monthly || a.p.name.localeCompare(b.p.name, "ru"));
+
+  const byCur = {};
+  candidates.forEach(x => {
+    const c = x.p.plan.currency || "₽";
+    byCur[c] = (byCur[c] || 0) + x.monthly;
+  });
+  const saving = Object.keys(byCur).length
+    ? Object.keys(byCur).map(c => fmtMoney(byCur[c], c)).join(" + ")
+    : "0 ₽";
+
+  return { candidates: candidates, saving: saving };
+}
+
+function valueVerdict(p) {
+  if (!monthlyCost(p)) return p.status === "Активна" ? "Бесплатный" : "—";
+  if (p.usage === "Ежедневно") return "Стоит своих денег";
+  if (p.usage === "Еженедельно") return "Скорее стоит";
+  if (p.usage === "Редко") return "Под вопросом";
+  if (p.usage === "Не использую") return "Кандидат на отмену";
+  return "Нет данных об использовании";
+}
+
+function renderEconomics() {
+  const box = $("#economics");
+  const e = subscriptionEconomics();
+  box.hidden = !e.candidates.length;
+  if (!e.candidates.length) { box.innerHTML = ""; return; }
+
+  box.innerHTML =
+    "<div class='economics-head'><div><h2>Экономика подписок</h2>" +
+      "<p>Платные сервисы, которые используются редко или не используются</p></div>" +
+      "<div class='saving'><span>Потенциальная экономия</span><b>" + esc(e.saving) + "/мес</b></div></div>" +
+    "<div class='economics-list'>" + e.candidates.slice(0, 8).map(x =>
+      "<button class='economics-row' type='button' data-economics='" + esc(x.p.id) + "'>" +
+        "<span><b>" + esc(x.p.name) + "</b><small>" + esc(x.p.usage || "не указано") + " · " +
+          esc(valueVerdict(x.p)) + "</small></span>" +
+        "<strong>" + esc(priceLabel(x.p) || fmtMoney(x.monthly, x.p.plan.currency)) + "</strong>" +
+      "</button>"
+    ).join("") + "</div>";
+}
+
 function renderFilters() {
   const counts = {};
   state.platforms.forEach(p => counts[p.category] = (counts[p.category] || 0) + 1);
@@ -731,7 +778,7 @@ function renderBanners() {
     "</div>").join("");
 }
 
-function render() { renderStats(); renderAttention(); renderFilters(); renderGrid(); renderLock(); renderBanners(); }
+function render() { renderStats(); renderAttention(); renderEconomics(); renderFilters(); renderGrid(); renderLock(); renderBanners(); }
 
 /* ==================================================================
    Карточка платформы (просмотр)
@@ -823,6 +870,7 @@ async function openCard(id) {
     "<button class='btn sm' type='button' data-act='goPay' data-id='" + pe.id + "'>💳 " + esc(pe.name) + " →</button>", true]);
   else if (pe) kv.push(["Чем платим", pe.name + (pe.note ? " — " + pe.note : "")]);
   if (p.usage) kv.push(["Использование", p.usage]);
+  if (monthlyCost(p)) kv.push(["Ценность подписки", valueVerdict(p)]);
   if (p.checkedAt) kv.push(["Цены проверял", fmtDate(p.checkedAt)]);
   if (p.tags.length) kv.push(["Теги", p.tags.join(", ")]);
   if (kv.length) h += "<div class='sect'><h4>Тариф и учёт</h4><dl class='kv'>" +
@@ -1442,6 +1490,10 @@ $("#attention").addEventListener("click", e => {
   if (!item) return;
   $("#cardOv").dataset.mode = "view";
   openCard(item.dataset.attention);
+});
+$("#economics").addEventListener("click", e => {
+  const row = e.target.closest("[data-economics]");
+  if (row) openCard(row.dataset.economics);
 });
 
 $("#filters").addEventListener("click", e => {
