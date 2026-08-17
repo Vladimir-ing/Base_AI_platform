@@ -30,5 +30,6 @@ jobs:
           grep -q 'data-lang="en"' index.html
           grep -q 'core-ring' index.html
           grep -q 'prefers-reduced-motion' assets/landing.css
-          grep -q 'ai-platforms.html' index.html
+          grep -q 'auth.html?mode=signin' index.html
+          grep -q 'auth.html?mode=signup' index.html
           ! grep -q 'http-equiv="refresh"' index.html
