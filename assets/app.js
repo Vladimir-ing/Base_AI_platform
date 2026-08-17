@@ -246,6 +246,9 @@ let cloudSyncReady = false;
 let cloudSyncBusy = false;
 let cloudSyncPending = false;
 let cloudRemoteUpdatedAt = "";
+let cloudRevision = 0;
+let cloudConflict = false;
+let cloudConflictDialogOpen = false;
 let cloudSaveTimer = null;
 let syncMeta = readSyncMeta();
 let accountAccess = null;
@@ -322,6 +325,15 @@ function setCloudStatus(kind, text, title) {
   box.className = "cloud-sync " + kind;
   box.title = title || text;
   label.textContent = text;
+  box.onclick = cloudConflict ? resolveCloudConflict : null;
+  box.onkeydown = cloudConflict ? event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      resolveCloudConflict();
+    }
+  } : null;
+  box.tabIndex = cloudConflict ? 0 : -1;
+  box.setAttribute("role", cloudConflict ? "button" : "status");
 }
 
 function localHasUnsyncedChanges() {
@@ -334,6 +346,9 @@ function resetLocalCacheForUser(userId) {
   state = createSeedState();
   cryptoKey = null;
   cloudRemoteUpdatedAt = "";
+  cloudRevision = 0;
+  cloudConflict = false;
+  cloudConflictDialogOpen = false;
   syncMeta = { userId: userId, localUpdatedAt: "", lastSyncedLocalAt: "" };
   writeSyncMeta();
   save({ markDirty: false, sync: false });
@@ -373,6 +388,10 @@ function save(options) {
 
 function scheduleCloudSave() {
   clearTimeout(cloudSaveTimer);
+  if (cloudConflict) {
+    setCloudStatus("local", "Конфликт изменений", "Выберите, какую версию сохранить");
+    return;
+  }
   setCloudStatus("pending", "Синхронизация…", "Изменения ожидают сохранения в Supabase");
   cloudSaveTimer = setTimeout(pushStateToCloud, CLOUD_SAVE_DELAY_MS);
 }
@@ -388,34 +407,45 @@ async function pushStateToCloud() {
   cloudSyncBusy = true;
   cloudSyncPending = false;
   const localVersion = syncMeta.localUpdatedAt || new Date().toISOString();
-  const remoteTime = new Date().toISOString();
   const snapshot = JSON.parse(JSON.stringify(state));
   let saved = false;
   setCloudStatus("pending", "Синхронизация…", "Сохраняю изменения в Supabase");
   try {
-    const { data, error } = await window.supabaseClient
-      .from(CLOUD_TABLE)
-      .upsert({ user_id: cloudUserId, payload: snapshot, schema_version: 1, updated_at: remoteTime }, { onConflict: "user_id" })
-      .select("updated_at")
-      .single();
+    const { data, error } = await window.supabaseClient.rpc("save_user_vault", {
+      p_payload: snapshot,
+      p_schema_version: 1,
+      p_expected_revision: cloudRevision
+    }).single();
     if (error) throw error;
-    cloudRemoteUpdatedAt = data.updated_at || remoteTime;
+    cloudRevision = Number(data.revision) || cloudRevision + 1;
+    cloudRemoteUpdatedAt = data.updated_at || "";
     syncMeta.lastSyncedLocalAt = localVersion;
     writeSyncMeta();
     saved = true;
     setCloudStatus("saved", "Сохранено", "Данные сохранены в облаке: " + fmtDate(cloudRemoteUpdatedAt));
   } catch (error) {
-    setCloudStatus("local", "Только локально", "Облачное сохранение недоступно: " + (error?.message || "ошибка"));
+    if (error?.message === "vault_conflict" || error?.code === "40001") {
+      cloudConflict = true;
+      setCloudStatus("local", "Конфликт изменений", "В облаке уже есть более свежая версия");
+      toast("Данные изменились в другом окне или на другом устройстве", {
+        label: "Разрешить",
+        fn: resolveCloudConflict
+      });
+    } else {
+      setCloudStatus("local", "Только локально", "Облачное сохранение недоступно: " + (error?.message || "ошибка"));
+    }
   } finally {
     cloudSyncBusy = false;
     if (saved && cloudSyncPending && navigator.onLine) scheduleCloudSave();
   }
 }
 
-function applyCloudState(payload, updatedAt) {
+function applyCloudState(payload, updatedAt, revision) {
   state = normalizeStateData(payload);
   cryptoKey = null;
   cloudRemoteUpdatedAt = updatedAt || "";
+  cloudRevision = Number(revision) || 0;
+  cloudConflict = false;
   syncMeta.userId = cloudUserId;
   syncMeta.localUpdatedAt = updatedAt || new Date().toISOString();
   syncMeta.lastSyncedLocalAt = syncMeta.localUpdatedAt;
@@ -429,7 +459,7 @@ function applyCloudState(payload, updatedAt) {
 async function fetchCloudState() {
   return window.supabaseClient
     .from(CLOUD_TABLE)
-    .select("payload, schema_version, updated_at")
+    .select("payload, schema_version, updated_at, revision")
     .eq("user_id", cloudUserId)
     .maybeSingle();
 }
@@ -439,12 +469,50 @@ async function refreshCloudState() {
   try {
     const { data, error } = await fetchCloudState();
     if (error) throw error;
-    if (data && (!cloudRemoteUpdatedAt || new Date(data.updated_at) > new Date(cloudRemoteUpdatedAt))) {
-      applyCloudState(data.payload, data.updated_at);
+    if (data && Number(data.revision) > cloudRevision) {
+      applyCloudState(data.payload, data.updated_at, data.revision);
       setCloudStatus("saved", "Сохранено", "Загружена свежая версия из облака");
     }
   } catch (error) {
     setCloudStatus("local", "Только локально", "Не удалось проверить облако: " + (error?.message || "ошибка"));
+  }
+}
+
+async function resolveCloudConflict() {
+  if (!cloudConflict || cloudConflictDialogOpen) return;
+  cloudConflictDialogOpen = true;
+  const choice = await modal({
+    title: "Конфликт синхронизации",
+    sub: "Эта база была изменена в другом окне или на другом устройстве.",
+    body: "<p>Загрузите свежую облачную версию или явно сохраните текущую локальную версию поверх неё.</p>",
+    buttons: [
+      { label: "Загрузить облачную", value: "remote" },
+      { label: "Сохранить мою версию", value: "local", variant: "primary" }
+    ]
+  });
+  cloudConflictDialogOpen = false;
+  if (!choice) return;
+
+  setCloudStatus("pending", "Синхронизация…", "Разрешаю конфликт версий");
+  try {
+    const { data, error } = await fetchCloudState();
+    if (error) throw error;
+    if (!data) {
+      cloudRevision = 0;
+      cloudConflict = false;
+      if (choice === "local") await pushStateToCloud();
+      return;
+    }
+    if (choice === "remote") {
+      applyCloudState(data.payload, data.updated_at, data.revision);
+      setCloudStatus("saved", "Сохранено", "Загружена свежая версия из облака");
+      return;
+    }
+    cloudRevision = Number(data.revision) || 0;
+    cloudConflict = false;
+    await pushStateToCloud();
+  } catch (error) {
+    setCloudStatus("local", "Только локально", "Не удалось разрешить конфликт: " + (error?.message || "ошибка"));
   }
 }
 
@@ -468,6 +536,7 @@ async function initCloudSync() {
     if (error) throw error;
     const changedDuringInit = syncMeta.localUpdatedAt !== startLocalVersion;
     const previouslySyncedDirty = !!syncMeta.lastSyncedLocalAt && localHasUnsyncedChanges();
+    cloudRevision = data ? Number(data.revision) || 0 : 0;
     cloudSyncReady = true;
 
     if (!data) {
@@ -484,7 +553,7 @@ async function initCloudSync() {
       return;
     }
 
-    applyCloudState(data.payload, data.updated_at);
+    applyCloudState(data.payload, data.updated_at, data.revision);
     setCloudStatus("saved", "Сохранено", "Данные загружены из облака");
   } catch (error) {
     cloudSyncReady = false;
