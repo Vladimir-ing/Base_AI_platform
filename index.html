@@ -3,19 +3,80 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>База AI-платформ</title>
-<meta http-equiv="refresh" content="0; url=ai-platforms.html">
-<link rel="canonical" href="ai-platforms.html">
-<style>
-  html{color-scheme:dark}
-  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e1117;color:#e8eaf0;
-       font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;text-align:center;padding:24px}
-  a{color:#c3c0ff}
-</style>
+<meta name="description" content="AI CORE — your personal control center for AI tools, subscriptions, comparisons and recommendations.">
+<title>AI CORE — Your AI Control Center</title>
+<link rel="stylesheet" href="assets/landing.css">
 </head>
 <body>
-  <p>Открываю базу AI-платформ…<br>
-    <a href="ai-platforms.html">Если страница не открылась сама — нажмите здесь</a>
-  </p>
+<div class="landing-shell">
+  <div class="ambient" aria-hidden="true"><i class="orb a"></i><i class="orb b"></i><i class="orb c"></i></div>
+
+  <header class="nav">
+    <a class="brand" href="#top" aria-label="AI CORE home"><i class="brand-core" aria-hidden="true"></i><span>AI CORE</span></a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a href="#features" data-copy="navFeatures">Возможности</a>
+      <a href="#assistant" data-copy="navAssistant">AI-помощник</a>
+      <a href="#subscriptions" data-copy="navSubscriptions">Подписки</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language"><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div>
+    <div class="nav-cta"><a class="btn" href="ai-platforms.html" data-copy="navSignIn">Войти</a><a class="btn primary" href="ai-platforms.html" data-copy="navStart">Начать</a></div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div>
+        <div class="eyebrow" data-copy="eyebrow">Персональная операционная система для AI</div>
+        <h1><span class="gradient-text" data-copy="heroTitle">AI CORE</span></h1>
+        <h2 data-copy="heroSub">Ваш персональный центр управления AI-инструментами</h2>
+        <p class="hero-copy" data-copy="heroText">Соберите AI-сервисы в одном месте, контролируйте подписки, сравнивайте платформы и получайте умные рекомендации.</p>
+        <div class="hero-actions"><a class="btn primary" href="ai-platforms.html" data-copy="heroStart">Начать</a><a class="btn" href="#features" data-copy="heroExplore">Посмотреть возможности</a></div>
+        <div class="trust" data-copy="trust">Ваши данные и доступы остаются под вашим контролем.</div>
+      </div>
+
+      <div class="core-stage" aria-label="AI CORE interface preview">
+        <div class="core-ring"></div><div class="core-ring r2"></div><div class="core-center"></div>
+        <div class="dashboard">
+          <div class="dash-head"><b>AI CORE</b><span class="dash-dots"><i></i><i></i><i></i></span></div>
+          <div class="dash-body">
+            <div class="metrics">
+              <div class="metric"><small data-copy="metricTools">AI-инструменты</small><b>28</b></div>
+              <div class="metric"><small data-copy="metricSpend">Расходы / месяц</small><b>$184</b></div>
+              <div class="metric"><small data-copy="metricAttention">Требуют внимания</small><b>3</b></div>
+            </div>
+            <div class="mini-tools"><div class="mini-card"><small>Text / Assistant</small><b>ChatGPT</b></div><div class="mini-card"><small>Text / Assistant</small><b>Claude</b></div><div class="mini-card"><small>Images</small><b>Midjourney</b></div><div class="mini-card"><small>Audio</small><b>ElevenLabs</b></div></div>
+            <div class="assistant-preview"><strong>AI Assistant</strong><br><span data-copy="assistantQuestion">Какие подписки стоит пересмотреть?</span><br><span data-copy="assistantAnswer">3 сервиса используются редко. Потенциальная экономия — $42/мес.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-head"><div class="eyebrow" data-copy="featKicker">Возможности</div><h3 data-copy="featTitle">Всё необходимое для управления вашим AI-стеком</h3><p data-copy="featText">От каталога инструментов до расходов и персональных рекомендаций — в одном интерфейсе.</p></div>
+      <div class="features">
+        <article class="feature"><div class="feature-num">01</div><h4 data-copy="f1t">AI-инструменты</h4><p data-copy="f1d">Храните используемые платформы в едином рабочем пространстве.</p></article>
+        <article class="feature"><div class="feature-num">02</div><h4 data-copy="f2t">Контроль подписок</h4><p data-copy="f2d">Следите за продлениями, расходами и сервисами, которыми почти не пользуетесь.</p></article>
+        <article class="feature"><div class="feature-num">03</div><h4 data-copy="f3t">Сравнение платформ</h4><p data-copy="f3d">Сравнивайте сервисы по задачам, стоимости, рейтингу и использованию.</p></article>
+        <article class="feature"><div class="feature-num">04</div><h4 data-copy="f4t">AI-помощник</h4><p data-copy="f4d">Задавайте вопросы по собственной базе AI-инструментов.</p></article>
+      </div>
+    </section>
+
+    <section class="statement"><h3 class="gradient-text" data-copy="stmt1">Не очередной каталог AI-сервисов.</h3><p data-copy="stmt2">Ваша персональная операционная система для AI.</p><div class="flow"><span data-copy="flow1">Найти</span><span>→</span><span data-copy="flow2">Организовать</span><span>→</span><span data-copy="flow3">Сравнить</span><span>→</span><span data-copy="flow4">Оптимизировать</span><span>→</span><span data-copy="flow5">Спросить AI</span></div></section>
+
+    <section class="section economy" id="subscriptions">
+      <div><div class="eyebrow" data-copy="ecoKicker">Экономика AI</div><div class="section-head" style="text-align:left;margin:14px 0 0"><h3 data-copy="ecoTitle">Не платите за сервисы, которыми не пользуетесь.</h3><p data-copy="ecoText">AI CORE помогает увидеть стоимость AI-стека, ближайшие продления и кандидатов на пересмотр.</p></div></div>
+      <div class="economy-card"><small data-copy="ecoSpend">Расходы в месяц</small><div class="spend"><del>$247</del> → $189</div><div class="saving" data-copy="ecoSaving">Потенциальная экономия: $58/мес.</div></div>
+    </section>
+
+    <section class="section economy" id="assistant">
+      <div class="assistant-demo"><div class="bubble user" data-copy="aiQ">Чем мне лучше сделать презентацию?</div><div class="bubble ai"><strong>AI CORE</strong><br><span data-copy="aiA">По вашей базе: Gamma — лучший общий вариант, Canva — для быстрого дизайна. У вас уже есть подписка Gamma.</span></div></div>
+      <div><div class="eyebrow" data-copy="aiKicker">AI-помощник</div><div class="section-head" style="text-align:left;margin:14px 0 0"><h3 data-copy="aiTitle">Спросите свой AI-стек</h3><p data-copy="aiText">Помощник анализирует данные ваших карточек и помогает выбирать уже доступные вам инструменты.</p></div></div>
+    </section>
+
+    <section class="section final-cta"><h3 class="gradient-text" data-copy="ctaTitle">Возьмите свой AI-стек под контроль.</h3><p class="hero-copy" style="margin:0 auto 25px" data-copy="ctaText">Создайте свой AI CORE и управляйте инструментами, расходами и знаниями из одного места.</p><a class="btn primary" href="ai-platforms.html" data-copy="ctaBtn">Создать AI CORE</a></section>
+  </main>
+
+  <footer class="footer"><span data-copy="footer">AI CORE · Your AI Control Center</span><div class="footer-links"><a href="#" data-copy="privacy">Конфиденциальность</a><a href="#" data-copy="terms">Условия</a><a href="#" data-copy="contact">Контакты</a></div></footer>
+</div>
+<script src="assets/landing.js"></script>
 </body>
 </html>
