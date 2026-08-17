@@ -81,10 +81,10 @@ Deno.serve(async (req: Request) => {
     pinned: Boolean(p?.pinned),
     plan: {
       tier: cleanString(p?.plan?.tier, 120),
-      cost: Number(p?.plan?.cost || 0),
+      price: Number(p?.plan?.price || p?.plan?.cost || 0),
       currency: cleanString(p?.plan?.currency, 16),
       period: cleanString(p?.plan?.period, 60),
-      renewal: cleanString(p?.plan?.renewal, 40),
+      renewsOn: cleanString(p?.plan?.renewsOn || p?.plan?.renewal, 40),
     },
   }));
 
