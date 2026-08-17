@@ -1,0 +1,34 @@
+name: AI CORE neon landing
+
+on:
+  push:
+    branches: [agent/ai-core-neon-landing]
+  pull_request:
+    paths:
+      - index.html
+      - assets/landing.css
+      - assets/landing.js
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check landing JavaScript
+        run: node --check assets/landing.js
+      - name: Structural checks
+        run: |
+          test -f assets/landing.css
+          test -f assets/landing.js
+          grep -q 'AI CORE' index.html
+          grep -q 'assets/landing.css' index.html
+          grep -q 'assets/landing.js' index.html
+          grep -q 'data-lang="ru"' index.html
+          grep -q 'data-lang="en"' index.html
+          grep -q 'core-ring' index.html
+          grep -q 'prefers-reduced-motion' assets/landing.css
+          grep -q 'ai-platforms.html' index.html
+          ! grep -q 'http-equiv="refresh"' index.html
