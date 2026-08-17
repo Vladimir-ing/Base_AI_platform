@@ -1,3 +1,5 @@
+import { createClient } from "npm:@supabase/supabase-js@2.112.3";
+
 const ALLOWED_ORIGINS = new Set([
   "https://vladimir-ing.github.io",
   "http://localhost:3000",
@@ -11,7 +13,7 @@ function corsHeaders(req: Request) {
   const allowOrigin = ALLOWED_ORIGINS.has(origin) ? origin : "https://vladimir-ing.github.io";
   return {
     "Access-Control-Allow-Origin": allowOrigin,
-    "Access-Control-Allow-Headers": "content-type, x-assistant-key",
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Vary": "Origin",
   };
@@ -44,17 +46,27 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json(req, { error: "method_not_allowed" }, 405);
 
   const apiKey = Deno.env.get("OPENAI_API_KEY") || "";
-  const sharedSecret = Deno.env.get("ASSISTANT_SHARED_SECRET") || "";
   const model = Deno.env.get("OPENAI_MODEL") || "gpt-5.6";
 
-  if (!apiKey || !sharedSecret) {
-    return json(req, { error: "backend_not_configured" }, 503);
-  }
-
-  const providedSecret = req.headers.get("x-assistant-key") || "";
-  if (!providedSecret || providedSecret !== sharedSecret) {
+  const authHeader = req.headers.get("authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  if (!token) {
     return json(req, { error: "unauthorized" }, 401);
   }
+
+  const publishableKeyNames = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") || "{}");
+  const publishableKeyName = publishableKeyNames.default || "";
+  const publishableKey = (publishableKeyName && Deno.env.get(publishableKeyName)) ||
+    Deno.env.get("SUPABASE_ANON_KEY") || "";
+  const supabase = createClient(Deno.env.get("SUPABASE_URL") || "", publishableKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: authData, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !authData.user) {
+    return json(req, { error: "unauthorized" }, 401);
+  }
+
+  if (!apiKey) return json(req, { error: "backend_not_configured" }, 503);
 
   let body: any;
   try {
