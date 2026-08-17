@@ -1006,6 +1006,9 @@ async function callRemoteAssistant(query) {
 function assistantErrorText(code) {
   return ({
     plan_llm_limit: "месячный лимит LLM-запросов исчерпан",
+    preview_llm_limit: "лимит раннего доступа — 20 LLM-запросов в месяц — исчерпан",
+    daily_budget_exhausted: "дневной бюджет LLM исчерпан; он восстановится в 00:00 UTC",
+    budget_unavailable: "не удалось проверить дневной бюджет LLM",
     access_unavailable: "не удалось проверить тариф",
     plan_unavailable: "настройки тарифа временно недоступны",
     usage_unavailable: "не удалось проверить лимит запросов"
@@ -1207,7 +1210,9 @@ function renderLock() {
 function renderBanners() {
   const b = [];
   if (accountAccess && accountAccess.free_preview) {
-    b.push(["", "Сейчас действует бесплатный ранний доступ: все функции и LLM-помощник доступны без тарифных ограничений.", ""]);
+    b.push(["", accountAccess.is_admin
+      ? "Сейчас действует бесплатный ранний доступ. Для пользователей установлен лимит 20 LLM-запросов в месяц; общий бюджет сайта — $1 в сутки."
+      : "Сейчас действует бесплатный ранний доступ: все функции открыты, осталось " + accountAccess.llm_remaining + " из " + accountAccess.llm_limit + " LLM-запросов на этот месяц.", ""]);
   } else if (accountAccess && accountAccess.status === "trialing") {
     b.push(["", "Полный trial Max: осталось " + accountAccess.days_remaining + " дн. После него автоматически включится бесплатный Basic на 10 платформ.", ""]);
   } else if (accountAccess && accountAccess.platform_limit != null && state.platforms.length >= accountAccess.platform_limit) {

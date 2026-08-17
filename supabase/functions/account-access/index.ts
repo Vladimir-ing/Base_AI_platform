@@ -52,7 +52,7 @@ Deno.serve(async (req: Request) => {
   const user = authData.user;
   const { data: settings, error: settingsError } = await server
     .from("product_settings")
-    .select("billing_enabled,free_preview_enabled,trial_days")
+    .select("billing_enabled,free_preview_enabled,free_preview_llm_monthly_limit,trial_days")
     .eq("singleton", true)
     .single();
   if (settingsError || !settings) return json(req, { error: "settings_unavailable" }, 503);
@@ -107,7 +107,9 @@ Deno.serve(async (req: Request) => {
   if (usageError) return json(req, { error: "usage_unavailable" }, 503);
   const llmUsed = count || 0;
   const daysRemaining = isTrial ? Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / 86400000)) : null;
-  const llmLimit = isPreview || isTrial || access.is_admin ? null : planData?.llm_monthly_limit;
+  const llmLimit = access.is_admin || isTrial
+    ? null
+    : (isPreview ? Number(settings.free_preview_llm_monthly_limit) : planData?.llm_monthly_limit);
 
   return json(req, {
     is_admin: Boolean(access.is_admin),
