@@ -65,27 +65,34 @@ Deno.serve(async (req: Request) => {
 
   const [accessResult, usageResult, plansResult, settingsResult] = await Promise.all([
     server.from("user_access").select("user_id,status,plan,is_admin,trial_started_at,trial_ends_at,subscribed_at,current_period_end,cancel_at_period_end,billing_interval,last_seen_at,created_at"),
-    server.from("llm_usage_events").select("user_id,status,total_tokens,created_at").gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()),
+    server.from("llm_usage_events").select("user_id,status,total_tokens,estimated_cost_usd,actual_cost_usd,budget_day,created_at").gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()),
     server.from("billing_plans").select("code,name,platform_limit,llm_monthly_limit,monthly_price_usd,annual_monthly_price_usd,annual_price_usd,sort_order").eq("is_active", true).order("sort_order"),
-    server.from("product_settings").select("billing_enabled,free_preview_enabled,trial_days,updated_at").eq("singleton", true).single(),
+    server.from("product_settings").select("billing_enabled,free_preview_enabled,free_preview_llm_monthly_limit,trial_days,daily_llm_budget_usd,llm_input_usd_per_million,llm_output_usd_per_million,llm_max_output_tokens,updated_at").eq("singleton", true).single(),
   ]);
   if (accessResult.error || usageResult.error || plansResult.error || settingsResult.error) return json(req, { error: "dashboard_unavailable" }, 503);
 
   const now = Date.now();
   const accessByUser = new Map((accessResult.data || []).map((row: any) => [row.user_id, row]));
-  const usageByUser = new Map<string, { requests: number; tokens: number }>();
+  const usageByUser = new Map<string, { requests: number; tokens: number; cost: number }>();
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  let llmCostToday = 0;
   for (const row of usageResult.data || []) {
     if (row.status === "denied") continue;
-    const current = usageByUser.get(row.user_id) || { requests: 0, tokens: 0 };
+    const current = usageByUser.get(row.user_id) || { requests: 0, tokens: 0, cost: 0 };
+    const cost = Number(row.status === "started"
+      ? (row.estimated_cost_usd || 0)
+      : (row.actual_cost_usd ?? row.estimated_cost_usd ?? 0));
     current.requests += 1;
     current.tokens += Number(row.total_tokens || 0);
+    current.cost += cost;
     usageByUser.set(row.user_id, current);
+    if (row.budget_day === todayUtc && ["started", "succeeded", "failed"].includes(row.status)) llmCostToday += cost;
   }
 
   const users = authUsers.map((user: any) => {
     const access: any = accessByUser.get(user.id) || {};
     const expiredTrial = access.status === "trialing" && access.trial_ends_at && new Date(access.trial_ends_at).getTime() <= now;
-    const usage = usageByUser.get(user.id) || { requests: 0, tokens: 0 };
+    const usage = usageByUser.get(user.id) || { requests: 0, tokens: 0, cost: 0 };
     return {
       id: user.id,
       email: user.email || "",
@@ -103,6 +110,7 @@ Deno.serve(async (req: Request) => {
       last_seen_at: access.last_seen_at || null,
       llm_requests_30d: usage.requests,
       llm_tokens_30d: usage.tokens,
+      llm_cost_30d_usd: usage.cost,
     };
   }).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -117,7 +125,11 @@ Deno.serve(async (req: Request) => {
   const llm30 = Array.from(usageByUser.values()).reduce((acc, item) => ({
     requests: acc.requests + item.requests,
     tokens: acc.tokens + item.tokens,
-  }), { requests: 0, tokens: 0 });
+    cost: acc.cost + item.cost,
+  }), { requests: 0, tokens: 0, cost: 0 });
+  const dailyBudget = Number(settingsResult.data.daily_llm_budget_usd || 0);
+  const resetAt = new Date();
+  resetAt.setUTCHours(24, 0, 0, 0);
 
   return json(req, {
     generated_at: new Date().toISOString(),
@@ -128,6 +140,11 @@ Deno.serve(async (req: Request) => {
       statuses,
       llm_requests_30d: llm30.requests,
       llm_tokens_30d: llm30.tokens,
+      llm_cost_30d_usd: llm30.cost,
+      llm_cost_today_usd: llmCostToday,
+      llm_daily_budget_usd: dailyBudget,
+      llm_daily_remaining_usd: Math.max(0, dailyBudget - llmCostToday),
+      llm_budget_resets_at: resetAt.toISOString(),
     },
     plans: plansResult.data || [],
     settings: settingsResult.data,

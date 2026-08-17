@@ -40,6 +40,19 @@ function extractOutputText(data: any) {
   return chunks.join("\n").trim();
 }
 
+function tokenCostUsd(inputTokens: number, outputTokens: number, inputRate: number, outputRate: number) {
+  const longContext = inputTokens > 272000;
+  const effectiveInputRate = inputRate * (longContext ? 2 : 1);
+  const effectiveOutputRate = outputRate * (longContext ? 1.5 : 1);
+  return (inputTokens * effectiveInputRate + outputTokens * effectiveOutputRate) / 1_000_000;
+}
+
+function nextUtcDayIso() {
+  const next = new Date();
+  next.setUTCHours(24, 0, 0, 0);
+  return next.toISOString();
+}
+
 async function markUsage(server: any, id: number | null, values: Record<string, unknown>) {
   if (id != null) await server.from("llm_usage_events").update(values).eq("id", id);
 }
@@ -67,14 +80,14 @@ Deno.serve(async (req: Request) => {
 
   const { data: access, error: accessError } = await server
     .from("user_access")
-    .select("status,is_admin,trial_started_at,trial_ends_at")
+    .select("status,plan,is_admin,trial_started_at,trial_ends_at")
     .eq("user_id", userId)
     .single();
   if (accessError || !access) return json(req, { error: "access_unavailable" }, 503);
 
   const { data: settings, error: settingsError } = await server
     .from("product_settings")
-    .select("free_preview_enabled")
+    .select("free_preview_enabled,free_preview_llm_monthly_limit,daily_llm_budget_usd,llm_input_usd_per_million,llm_output_usd_per_million,llm_max_output_tokens")
     .eq("singleton", true)
     .single();
   if (settingsError || !settings) return json(req, { error: "settings_unavailable" }, 503);
@@ -89,11 +102,14 @@ Deno.serve(async (req: Request) => {
   }
 
   let llmRemaining: number | null = null;
-  if (!isPreview && !access.is_admin && !trialActive) {
-    const { data: planData, error: planError } = await server
-      .from("billing_plans").select("llm_monthly_limit").eq("code", effectivePlan).single();
-    if (planError || !planData) return json(req, { error: "plan_unavailable" }, 503);
-    const monthlyLimit = planData.llm_monthly_limit;
+  if (!access.is_admin && !trialActive) {
+    let monthlyLimit: number | null = isPreview ? Number(settings.free_preview_llm_monthly_limit) : null;
+    if (!isPreview) {
+      const { data: planData, error: planError } = await server
+        .from("billing_plans").select("llm_monthly_limit").eq("code", effectivePlan).single();
+      if (planError || !planData) return json(req, { error: "plan_unavailable" }, 503);
+      monthlyLimit = planData.llm_monthly_limit;
+    }
     const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
     const { count, error: countError } = await server
       .from("llm_usage_events")
@@ -104,8 +120,9 @@ Deno.serve(async (req: Request) => {
     if (countError) return json(req, { error: "usage_unavailable" }, 503);
     const used = count || 0;
     if (monthlyLimit != null && used >= monthlyLimit) {
-      await server.from("llm_usage_events").insert({ user_id: userId, status: "denied", model, error_code: "plan_llm_limit" });
-      return json(req, { error: "plan_llm_limit", llm_remaining: 0 }, 429);
+      const errorCode = isPreview ? "preview_llm_limit" : "plan_llm_limit";
+      await server.from("llm_usage_events").insert({ user_id: userId, status: "denied", model, error_code: errorCode });
+      return json(req, { error: errorCode, llm_remaining: 0 }, 429);
     }
     llmRemaining = monthlyLimit == null ? null : monthlyLimit - used - 1;
   }
@@ -134,12 +151,6 @@ Deno.serve(async (req: Request) => {
     },
   }));
 
-  const started = await server.from("llm_usage_events")
-    .insert({ user_id: userId, status: "started", model })
-    .select("id").single();
-  if (started.error || !started.data) return json(req, { error: "usage_unavailable" }, 503);
-  const usageId = started.data.id;
-
   const instructions = [
     "Ты — помощник по личной базе AI-инструментов пользователя.",
     "Отвечай по-русски, кратко и практично.",
@@ -151,27 +162,65 @@ Deno.serve(async (req: Request) => {
   ].join("\n");
   const input = `${instructions}\n\nВОПРОС:\n${query}\n\nКАТАЛОГ:\n${JSON.stringify(platforms)}`;
 
+  const inputRate = Number(settings.llm_input_usd_per_million);
+  const outputRate = Number(settings.llm_output_usd_per_million);
+  const maxOutputTokens = Number(settings.llm_max_output_tokens);
+  const estimatedInputTokens = Math.ceil(input.length / 2);
+  const estimatedCostUsd = Number((tokenCostUsd(
+    estimatedInputTokens,
+    maxOutputTokens,
+    inputRate,
+    outputRate,
+  ) * 1.15).toFixed(8));
+
+  const reservation = await server.rpc("reserve_llm_daily_budget", {
+    p_user_id: userId,
+    p_model: model,
+    p_estimated_cost_usd: estimatedCostUsd,
+  });
+  const reserved = Array.isArray(reservation.data) ? reservation.data[0] : reservation.data;
+  if (reservation.error || !reserved) return json(req, { error: "budget_unavailable" }, 503);
+  if (!reserved.allowed) {
+    return json(req, {
+      error: "daily_budget_exhausted",
+      budget_usd: Number(reserved.budget_usd),
+      remaining_usd: Number(reserved.remaining_usd),
+      resets_at: nextUtcDayIso(),
+    }, 429);
+  }
+  const usageId = Number(reserved.usage_id);
+
   let upstream: Response;
   try {
     upstream = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, input, store: false }),
+      body: JSON.stringify({
+        model,
+        input,
+        store: false,
+        max_output_tokens: maxOutputTokens,
+        reasoning: { effort: "low" },
+      }),
     });
   } catch {
-    await markUsage(server, usageId, { status: "failed", error_code: "upstream_unreachable", completed_at: new Date().toISOString() });
+    await markUsage(server, usageId, { status: "failed", error_code: "upstream_unreachable", actual_cost_usd: 0, completed_at: new Date().toISOString() });
     return json(req, { error: "upstream_unreachable" }, 502);
   }
 
   const data = await upstream.json().catch(() => ({}));
   if (!upstream.ok) {
-    await markUsage(server, usageId, { status: "failed", error_code: `openai_${upstream.status}`, completed_at: new Date().toISOString() });
+    await markUsage(server, usageId, { status: "failed", error_code: `openai_${upstream.status}`, actual_cost_usd: 0, completed_at: new Date().toISOString() });
     return json(req, { error: "openai_error", status: upstream.status }, 502);
   }
 
+  const inputTokens = Number(data?.usage?.input_tokens || 0);
+  const outputTokens = Number(data?.usage?.output_tokens || 0);
+  const totalTokens = Number(data?.usage?.total_tokens || inputTokens + outputTokens);
+  const actualCostUsd = Number(tokenCostUsd(inputTokens, outputTokens, inputRate, outputRate).toFixed(8));
   const text = extractOutputText(data);
   if (!text) {
-    await markUsage(server, usageId, { status: "failed", error_code: "empty_model_response", completed_at: new Date().toISOString() });
+    await markUsage(server, usageId, { status: "failed", error_code: "empty_model_response", input_tokens: inputTokens, output_tokens: outputTokens, total_tokens: totalTokens, actual_cost_usd: actualCostUsd, completed_at: new Date().toISOString() });
     return json(req, { error: "empty_model_response" }, 502);
   }
 
@@ -180,12 +229,9 @@ Deno.serve(async (req: Request) => {
     ? marker[1].split(",").map((x: string) => x.trim()).filter(Boolean).slice(0, 5) : [];
   const answer = marker ? text.replace(marker[0], "").trim() : text.trim();
   const knownIds = new Set(platforms.map((p: any) => p.id));
-  const inputTokens = Number(data?.usage?.input_tokens || 0);
-  const outputTokens = Number(data?.usage?.output_tokens || 0);
-  const totalTokens = Number(data?.usage?.total_tokens || inputTokens + outputTokens);
   await markUsage(server, usageId, {
     status: "succeeded", input_tokens: inputTokens, output_tokens: outputTokens,
-    total_tokens: totalTokens, completed_at: new Date().toISOString(),
+    total_tokens: totalTokens, actual_cost_usd: actualCostUsd, completed_at: new Date().toISOString(),
   });
 
   return json(req, {
@@ -193,5 +239,6 @@ Deno.serve(async (req: Request) => {
     recommended_ids: ids.filter((id: string) => knownIds.has(id)),
     model,
     llm_remaining: llmRemaining,
+    daily_budget_remaining_usd: Math.max(0, Number(reserved.budget_usd) - Number(reserved.spent_before_usd) - actualCostUsd),
   });
 });
