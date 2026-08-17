@@ -18,6 +18,9 @@ body.auth-pending > :not(.auth-gate):not(script){visibility:hidden}
 .cloud-sync.local .cloud-dot{background:var(--danger)}
 .auth-page{display:grid;place-items:center;padding:24px}
 .auth-shell{width:100%;max-width:430px}
+.auth-toolbar{display:flex;justify-content:flex-end;gap:4px;margin:0 4px 10px}
+.auth-toolbar button{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:8px;padding:6px 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.auth-toolbar button.active{background:var(--accSoft);border-color:var(--acc);color:var(--accTxt)}
 .auth-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:24px}
 .auth-brand{display:flex;align-items:center;gap:13px;margin-bottom:22px}
 .auth-brand h1{font-size:21px}
