@@ -1,0 +1,48 @@
+name: Secure LLM backend upgrade
+
+on:
+  push:
+    branches:
+      - agent/secure-llm-backend
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/secure-llm-backend
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply frontend upgrade
+        run: python tools/upgrade_remote_assistant.py
+      - name: Check JavaScript syntax
+        run: node --check assets/app.js
+      - name: Structural checks
+        run: |
+          grep -q 'REMOTE_ASSISTANT_URL' assets/app.js
+          grep -q 'assistantSafePlatforms' assets/app.js
+          grep -q 'callRemoteAssistant' assets/app.js
+          grep -q 'sessionStorage.setItem(ASSISTANT_SESSION_KEY' assets/app.js
+          grep -q 'OPENAI_API_KEY' supabase/functions/ai-base-assistant/index.ts
+          grep -q 'ASSISTANT_SHARED_SECRET' supabase/functions/ai-base-assistant/index.ts
+          grep -q 'store: false' supabase/functions/ai-base-assistant/index.ts
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet; then
+            echo 'No generated changes'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/app.js assets/app.css
+          git commit -m 'Connect assistant to secure LLM backend'
+          git push origin HEAD:agent/secure-llm-backend

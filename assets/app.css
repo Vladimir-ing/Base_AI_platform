@@ -260,3 +260,14 @@ h1,h2,h3,h4{margin:0;line-height:1.25}
 .assistant-rec small{display:block;color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .assistant-rec em{font-style:normal;font-size:12px;white-space:nowrap;color:var(--accTxt)}
 @media (max-width:640px){.assistant-input{flex-direction:column}.assistant-rec{align-items:flex-start}.assistant-rec em{font-size:11px}}
+
+
+/* ---------- secure remote assistant ---------- */
+.assistant-connect{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);background:var(--panel2);border-radius:11px;padding:10px 11px;flex-wrap:wrap}
+.assistant-connect b{display:block;font-size:13px}.assistant-connect small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.assistant-connect-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.assistant-connect-actions input{min-width:210px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--txt);font:inherit;font-size:12px}
+.assistant-loading{padding:26px 10px;text-align:center;color:var(--accTxt)}
+.assistant-fallback{font-size:12px;color:var(--warn);background:var(--warnSoft);border-radius:9px;padding:8px 10px;margin-bottom:10px}
+.assistant-mode{display:inline-block;font-size:11.5px;color:var(--accTxt);background:var(--accSoft);padding:4px 8px;border-radius:999px;margin-bottom:10px}
+.assistant-llm-text{font-size:13.5px;line-height:1.6}
+@media (max-width:640px){.assistant-connect-actions{width:100%}.assistant-connect-actions input{width:100%;min-width:0}}
