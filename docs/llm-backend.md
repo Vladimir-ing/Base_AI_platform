@@ -4,25 +4,22 @@ The AI-base assistant can use a Supabase Edge Function as a server-side proxy to
 
 ## Deployed function
 
-- Supabase project: `VLV-Solomon`
+- Supabase project: `Vladimir-ing's Project`
 - Function: `ai-base-assistant`
-- Endpoint: `https://opndjkjfdlhjyuqwyyer.supabase.co/functions/v1/ai-base-assistant`
+- Endpoint: `https://hjbsrcreekzmrpplmrng.supabase.co/functions/v1/ai-base-assistant`
 
 ## Required Supabase Edge Function secrets
 
 Open Supabase Dashboard → Edge Functions → Secrets and add:
 
 - `OPENAI_API_KEY` — an OpenAI Platform API key.
-- `ASSISTANT_SHARED_SECRET` — a long random value known only to you. Use at least 32 random characters.
 - `OPENAI_MODEL` — optional. Defaults to `gpt-5.6`.
 
 Do not commit real secret values to GitHub.
 
 ## Browser connection
 
-Open the site → `✦ Помощник` → enter the value of `ASSISTANT_SHARED_SECRET` into `Ключ подключения к LLM` → `Подключить LLM`.
-
-The connection key is stored only in `sessionStorage`, so it is removed when the browser tab/session is closed. It is not written to the application's `localStorage` database.
+The browser sends the current Supabase access token automatically. There is no separate LLM connection key in the interface. The Edge Function rejects requests without a valid authenticated user.
 
 ## Data sent to the LLM
 
@@ -40,13 +37,13 @@ The request does **not** include account login, authentication method, password,
 
 ## Failure behavior
 
-If the Edge Function is unavailable, not configured, rejects the connection key, times out, or the OpenAI request fails, the UI automatically falls back to the existing local assistant.
+If the Edge Function is unavailable, not configured, rejects the user session, times out, or the OpenAI request fails, the UI automatically falls back to the existing local assistant.
 
 ## Server behavior
 
 The Edge Function:
 
-- validates `x-assistant-key` against `ASSISTANT_SHARED_SECRET`;
+- requires a valid Supabase access token and verifies the user server-side;
 - restricts CORS to the GitHub Pages origin plus localhost development origins;
 - limits question and catalog sizes;
 - calls the OpenAI Responses API server-side with `store: false`;
