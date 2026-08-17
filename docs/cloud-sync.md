@@ -34,7 +34,7 @@ JSON export remains available as an independent backup and migration path.
 
 ## Deployment order
 
-The migration `20260817102409_add_user_vault_revisions.sql` must be applied before the matching frontend is published. Until the migration exists in the target Supabase project, the `save_user_vault` RPC is unavailable and the new frontend intentionally keeps changes local instead of falling back to an unsafe unconditional upsert.
+The migrations `20260817102409_add_user_vault_revisions.sql` and `20260817111254_fix_user_vault_revision_ambiguity.sql` must be applied before the matching frontend is published. The second migration replaces the RPC body with explicit table aliases so PostgreSQL can distinguish table columns from `RETURNS TABLE` output variables. Until both migrations exist in the target Supabase project, the frontend intentionally keeps changes local instead of falling back to an unsafe unconditional upsert.
 
 After applying the migration, verify:
 
