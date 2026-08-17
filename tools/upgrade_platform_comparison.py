@@ -93,7 +93,7 @@ async function flowComparePlatforms() {
 
 # Wire button near existing add button listener.
 if '$("#compareBtn").addEventListener' not in js:
-    marker = '$("#addBtn").addEventListener("click", () => editCard(null));'
+    marker = '$("#addBtn").addEventListener("click", () => openEdit(null));'
     assert marker in js, "addBtn listener marker not found"
     js = js.replace(marker, '$("#compareBtn").addEventListener("click", flowComparePlatforms);\n' + marker, 1)
 
