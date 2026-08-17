@@ -10,6 +10,77 @@ const REVEAL_MS   = 15 * 1000;        // сколько показывать п�
 const CLIP_MS     = 30 * 1000;        // когда чистить буфер обмена
 const EXPORT_REMIND_DAYS = 14;
 
+
+const LANGUAGE_KEY = "ai-core-lang-v1";
+const I18N = {
+  ru: {
+    "brand.subtitle":"Ваш персональный центр управления AI-инструментами",
+    "search.placeholder":"Поиск: название, задача, приём…",
+    "top.assistant":"✦ Помощник",
+    "top.compare":"⇄ Сравнить",
+    "top.add":"+ Платформа",
+    "top.menuTitle":"Меню",
+    "menu.exportSecure":"Экспорт бэкапа (с секретами)",
+    "menu.exportOpen":"Экспорт без доступов",
+    "menu.import":"Импорт из файла…",
+    "menu.payments":"Оплата: сервисы и карты…",
+    "menu.master":"Мастер-пароль…",
+    "menu.seed":"Досыпать каталог платформ",
+    "menu.theme":"Сменить тему",
+    "menu.help":"Как это работает",
+    "empty.search":"Ничего не найдено. Сбросьте поиск или фильтры."
+  },
+  en: {
+    "brand.subtitle":"Your AI Control Center",
+    "search.placeholder":"Search: platform, task, workflow…",
+    "top.assistant":"✦ Assistant",
+    "top.compare":"⇄ Compare",
+    "top.add":"+ Platform",
+    "top.menuTitle":"Menu",
+    "menu.exportSecure":"Export backup (with secrets)",
+    "menu.exportOpen":"Export without credentials",
+    "menu.import":"Import from file…",
+    "menu.payments":"Payments: services & cards…",
+    "menu.master":"Master password…",
+    "menu.seed":"Add platform catalog",
+    "menu.theme":"Switch theme",
+    "menu.help":"How it works",
+    "empty.search":"Nothing found. Clear search or filters."
+  }
+};
+
+function detectLanguage() {
+  const saved = localStorage.getItem(LANGUAGE_KEY);
+  if (saved === "ru" || saved === "en") return saved;
+  return (navigator.language || "ru").toLowerCase().startsWith("en") ? "en" : "ru";
+}
+let uiLanguage = detectLanguage();
+
+function tr(key) {
+  return I18N[uiLanguage]?.[key] ?? I18N.ru[key] ?? key;
+}
+
+function applyLanguage(lang) {
+  if (lang === "ru" || lang === "en") uiLanguage = lang;
+  localStorage.setItem(LANGUAGE_KEY, uiLanguage);
+  document.documentElement.lang = uiLanguage;
+  document.title = uiLanguage === "en" ? "AI CORE — Your AI Control Center" : "AI CORE — Ваш центр управления AI";
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = tr(el.dataset.i18nPlaceholder); });
+  document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = tr(el.dataset.i18nTitle); });
+  document.querySelectorAll("#langSwitch [data-lang]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.lang === uiLanguage);
+    btn.setAttribute("aria-pressed", btn.dataset.lang === uiLanguage ? "true" : "false");
+  });
+}
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("#langSwitch [data-lang]");
+  if (!btn) return;
+  applyLanguage(btn.dataset.lang);
+});
+
+
 const CATS = [
   ["Обучение","🎓"], ["Текст/ассистенты","💬"], ["Код","⌨️"], ["Изображения","🖼️"],
   ["Видео","🎬"], ["Аудио","🔊"], ["Дизайн и презентации","🎨"], ["Автоматизация","⚙️"],
@@ -2185,3 +2256,6 @@ load();
 migratePayments();
 document.documentElement.setAttribute("data-theme", state.theme === "light" ? "light" : "dark");
 render();
+
+// Apply persisted/browser language after the full DOM has loaded.
+applyLanguage(uiLanguage);

@@ -1,0 +1,48 @@
+name: AI CORE brand and i18n upgrade
+
+on:
+  push:
+    branches:
+      - agent/ai-core-brand-i18n
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/ai-core-brand-i18n
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply AI CORE brand + i18n upgrade
+        run: python tools/upgrade_ai_core_brand_i18n.py
+      - name: Check JavaScript syntax
+        run: node --check assets/app.js
+      - name: Structural checks
+        run: |
+          grep -q '<span class="brand-ai">AI</span> CORE' ai-platforms.html
+          grep -q 'id="langSwitch"' ai-platforms.html
+          grep -q 'const LANGUAGE_KEY = "ai-core-lang-v1"' assets/app.js
+          grep -q 'function applyLanguage(lang)' assets/app.js
+          grep -q 'Your AI Control Center' assets/app.js
+          grep -q '.core-logo{' assets/app.css
+          grep -q 'prefers-reduced-motion' assets/app.css
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git config user.name "Vladimir"
+          git config user.email "siniad8790@gmail.com"
+          git add ai-platforms.html assets/app.js assets/app.css
+          git commit -m "Apply AI CORE brand and bilingual foundation"
+          git push
