@@ -1,0 +1,28 @@
+name: AI CORE cloud sync isolation
+
+on:
+  push:
+    branches:
+      - agent/cloud-sync-account-isolation
+  pull_request:
+    paths:
+      - "assets/app.js"
+      - "supabase/migrations/**"
+      - "tools/check-cloud-isolation.mjs"
+      - ".github/workflows/cloud-sync-isolation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  isolation-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check application syntax
+        run: node --check assets/app.js
+      - name: Check account isolation and RLS contract
+        run: node tools/check-cloud-isolation.mjs
