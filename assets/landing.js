@@ -3,8 +3,12 @@
 (function initLandingLanguage() {
   const languageButtons = Array.from(document.querySelectorAll("[data-language]"));
   const translated = Array.from(document.querySelectorAll("[data-ru][data-en]"));
+  const LANGUAGE_KEY = "ai-core-lang-v1";
+  const LEGACY_LANGUAGE_KEY = "aicore_language";
   let stored = null;
-  try { stored = localStorage.getItem("aicore_language"); } catch (_) {}
+  try {
+    stored = localStorage.getItem(LANGUAGE_KEY) || localStorage.getItem(LEGACY_LANGUAGE_KEY);
+  } catch (_) {}
 
   function setLanguage(language) {
     const selected = language === "en" ? "en" : "ru";
@@ -18,7 +22,7 @@
     document.title = selected === "ru"
       ? "AI CORE — управляйте AI-инструментами в одном месте"
       : "AI CORE — manage all your AI tools in one place";
-    try { localStorage.setItem("aicore_language", selected); } catch (_) {}
+    try { localStorage.setItem(LANGUAGE_KEY, selected); } catch (_) {}
   }
 
   languageButtons.forEach(button => {
