@@ -4,6 +4,9 @@
    Константы
    ================================================================== */
 const STORE_KEY = "ai-platforms-vault-v1";
+const SYNC_META_KEY = STORE_KEY + "-sync";
+const CLOUD_TABLE = "user_vaults";
+const CLOUD_SAVE_DELAY_MS = 800;
 const PBKDF2_ITER = 310000;
 const AUTOLOCK_MS = 10 * 60 * 1000;   // автоблокировка сейфа
 const REVEAL_MS   = 15 * 1000;        // сколько показывать пароль
@@ -238,6 +241,58 @@ function addPaymentService(name, url, note) {
    ================================================================== */
 let state = { version: 1, meta: null, platforms: [], payments: [], lastExport: null, theme: null };
 let storageOk = true;
+let cloudUserId = "";
+let cloudSyncReady = false;
+let cloudSyncBusy = false;
+let cloudSyncPending = false;
+let cloudRemoteUpdatedAt = "";
+let cloudSaveTimer = null;
+let syncMeta = readSyncMeta();
+
+function normalizeStateData(d) {
+  d = d && typeof d === "object" ? d : {};
+  return {
+    version: 1,
+    meta: d.meta || null,
+    platforms: (Array.isArray(d.platforms) ? d.platforms : []).map(normalize),
+    payments: (Array.isArray(d.payments) ? d.payments : []).map(normPayment),
+    lastExport: d.lastExport || null,
+    theme: d.theme || null
+  };
+}
+
+function readSyncMeta() {
+  try {
+    const raw = localStorage.getItem(SYNC_META_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    return {
+      localUpdatedAt: data.localUpdatedAt || "",
+      lastSyncedLocalAt: data.lastSyncedLocalAt || ""
+    };
+  } catch (_) {
+    return { localUpdatedAt: "", lastSyncedLocalAt: "" };
+  }
+}
+
+function writeSyncMeta() {
+  try { localStorage.setItem(SYNC_META_KEY, JSON.stringify(syncMeta)); }
+  catch (_) {}
+}
+
+function setCloudStatus(kind, text, title) {
+  const box = $("#cloudSync");
+  const label = $("#cloudStatus");
+  if (!box || !label) return;
+  box.className = "cloud-sync " + kind;
+  box.title = title || text;
+  label.textContent = text;
+}
+
+function localHasUnsyncedChanges() {
+  if (!syncMeta.localUpdatedAt) return false;
+  if (!syncMeta.lastSyncedLocalAt) return true;
+  return new Date(syncMeta.localUpdatedAt).getTime() > new Date(syncMeta.lastSyncedLocalAt).getTime();
+}
 
 function load() {
   let raw = null;
@@ -251,14 +306,7 @@ function load() {
   if (raw) {
     try {
       const d = JSON.parse(raw);
-      state = {
-        version: 1,
-        meta: d.meta || null,
-        platforms: (d.platforms || []).map(normalize),
-        payments: (d.payments || []).map(normPayment),
-        lastExport: d.lastExport || null,
-        theme: d.theme || null
-      };
+      state = normalizeStateData(d);
       return;
     } catch (e) { /* повреждённые данные — уходим на сид */ }
   }
@@ -267,15 +315,125 @@ function load() {
     p.id = "seed-" + i;
     return p;
   });
-  save();
+  save({ markDirty: false, sync: false });
 }
-function save() {
-  if (!storageOk) return;
+function save(options) {
+  options = options || {};
+  if (options.markDirty !== false) {
+    syncMeta.localUpdatedAt = new Date().toISOString();
+    writeSyncMeta();
+  }
+  if (storageOk) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch (e) { storageOk = false; renderBanners(); }
+  }
+  if (options.sync !== false && cloudSyncReady) scheduleCloudSave();
+}
+
+function scheduleCloudSave() {
+  clearTimeout(cloudSaveTimer);
+  setCloudStatus("pending", "Синхронизация…", "Изменения ожидают сохранения в Supabase");
+  cloudSaveTimer = setTimeout(pushStateToCloud, CLOUD_SAVE_DELAY_MS);
+}
+
+async function pushStateToCloud() {
+  if (!cloudSyncReady || !cloudUserId) return;
+  if (cloudSyncBusy) { cloudSyncPending = true; return; }
+  cloudSyncBusy = true;
+  cloudSyncPending = false;
+  const localVersion = syncMeta.localUpdatedAt || new Date().toISOString();
+  const remoteTime = new Date().toISOString();
+  const snapshot = JSON.parse(JSON.stringify(state));
+  let saved = false;
+  setCloudStatus("pending", "Синхронизация…", "Сохраняю изменения в Supabase");
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(state));
-  } catch (e) {
-    storageOk = false;
-    renderBanners();
+    const { data, error } = await window.supabaseClient
+      .from(CLOUD_TABLE)
+      .upsert({ user_id: cloudUserId, payload: snapshot, schema_version: 1, updated_at: remoteTime }, { onConflict: "user_id" })
+      .select("updated_at")
+      .single();
+    if (error) throw error;
+    cloudRemoteUpdatedAt = data.updated_at || remoteTime;
+    syncMeta.lastSyncedLocalAt = localVersion;
+    writeSyncMeta();
+    saved = true;
+    setCloudStatus("saved", "Сохранено", "Данные сохранены в облаке: " + fmtDate(cloudRemoteUpdatedAt));
+  } catch (error) {
+    setCloudStatus("local", "Только локально", "Облачное сохранение недоступно: " + (error?.message || "ошибка"));
+  } finally {
+    cloudSyncBusy = false;
+    if (saved && cloudSyncPending && navigator.onLine) scheduleCloudSave();
+  }
+}
+
+function applyCloudState(payload, updatedAt) {
+  state = normalizeStateData(payload);
+  cryptoKey = null;
+  cloudRemoteUpdatedAt = updatedAt || "";
+  syncMeta.localUpdatedAt = updatedAt || new Date().toISOString();
+  syncMeta.lastSyncedLocalAt = syncMeta.localUpdatedAt;
+  writeSyncMeta();
+  save({ markDirty: false, sync: false });
+  document.documentElement.setAttribute("data-theme", state.theme === "light" ? "light" : "dark");
+  migratePayments();
+  render();
+}
+
+async function fetchCloudState() {
+  return window.supabaseClient
+    .from(CLOUD_TABLE)
+    .select("payload, schema_version, updated_at")
+    .eq("user_id", cloudUserId)
+    .maybeSingle();
+}
+
+async function refreshCloudState() {
+  if (!cloudSyncReady || cloudSyncBusy || localHasUnsyncedChanges()) return;
+  try {
+    const { data, error } = await fetchCloudState();
+    if (error) throw error;
+    if (data && (!cloudRemoteUpdatedAt || new Date(data.updated_at) > new Date(cloudRemoteUpdatedAt))) {
+      applyCloudState(data.payload, data.updated_at);
+      setCloudStatus("saved", "Сохранено", "Загружена свежая версия из облака");
+    }
+  } catch (error) {
+    setCloudStatus("local", "Только локально", "Не удалось проверить облако: " + (error?.message || "ошибка"));
+  }
+}
+
+async function initCloudSync() {
+  const startLocalVersion = syncMeta.localUpdatedAt;
+  setCloudStatus("pending", "Синхронизация…", "Проверяю облачное хранилище");
+  try {
+    const { data: authData, error: authError } = await window.supabaseClient.auth.getUser();
+    if (authError || !authData.user) throw authError || new Error("Нет активной сессии");
+    cloudUserId = authData.user.id;
+
+    const { data, error } = await fetchCloudState();
+    if (error) throw error;
+    const changedDuringInit = syncMeta.localUpdatedAt !== startLocalVersion;
+    const previouslySyncedDirty = !!syncMeta.lastSyncedLocalAt && localHasUnsyncedChanges();
+    cloudSyncReady = true;
+
+    if (!data) {
+      if (!syncMeta.localUpdatedAt) {
+        syncMeta.localUpdatedAt = new Date().toISOString();
+        writeSyncMeta();
+      }
+      await pushStateToCloud();
+      return;
+    }
+
+    if (changedDuringInit || previouslySyncedDirty) {
+      await pushStateToCloud();
+      return;
+    }
+
+    applyCloudState(data.payload, data.updated_at);
+    setCloudStatus("saved", "Сохранено", "Данные загружены из облака");
+  } catch (error) {
+    cloudSyncReady = false;
+    setCloudStatus("local", "Только локально", "Облачная синхронизация недоступна: " + (error?.message || "ошибка"));
   }
 }
 
@@ -1003,15 +1161,15 @@ function renderLock() {
   $("#brandSub").textContent = "личный справочник доступов и приёмов" +
     (isSetUp() ? "" : " · сейф ещё не создан");
   $("#storeHint").textContent = storageOk
-    ? "Данные хранятся в этом браузере. Регулярно делайте экспорт."
-    : "Браузер запретил локальное хранилище — данные только в памяти!";
+    ? "Есть локальный кэш и персональная копия в Supabase. Экспорт остаётся дополнительным бэкапом."
+    : "Локальный кэш недоступен. При наличии сети данные сохраняются в Supabase.";
 }
 
 function renderBanners() {
   const b = [];
   if (!storageOk) b.push(["bad", "<b>Браузер не даёт сохранять данные.</b> Всё, что вы введёте, живёт только до закрытия вкладки — сделайте «Экспорт бэкапа» перед закрытием.", ""]);
   const hasSecrets = state.platforms.some(p => p.secret);
-  if (hasSecrets && !state.lastExport) b.push(["", "У вас есть сохранённые секреты, но ни одного бэкапа. Очистка данных браузера удалит базу безвозвратно.", "export"]);
+  if (hasSecrets && !state.lastExport) b.push(["", "У вас есть сохранённые секреты, но нет независимого файла бэкапа. Облачная копия уже работает; экспорт полезен для дополнительного восстановления.", "export"]);
   else if (state.lastExport) {
     const days = Math.floor((Date.now() - new Date(state.lastExport)) / 86400000);
     if (days >= EXPORT_REMIND_DAYS) b.push(["", "Последний бэкап был " + days + " дн. назад.", "export"]);
@@ -1714,7 +1872,7 @@ function showHelp() {
   modal({
     title: "Как это работает",
     body:
-      "<div class='sect'><h4>Где данные</h4><p>Всё лежит в этом браузере (localStorage) — файл ничего не отправляет в сеть и работает без интернета. Другой браузер или режим инкогнито = пустая база.</p></div>" +
+      "<div class='sect'><h4>Где данные</h4><p>Рабочая копия хранится локально в браузере и синхронизируется с персональной записью в Supabase. На другом устройстве войдите в тот же аккаунт — база загрузится автоматически. При временном отсутствии сети изменения остаются локально и отправляются после восстановления соединения.</p></div>" +
       "<div class='sect'><h4>Сейф</h4><p>Пароли, API-ключи и приватные заметки шифруются AES-256 на ключе из вашего мастер-пароля. Мастер-пароль нигде не сохраняется: его нельзя восстановить, но и украсть из файла нельзя. Сейф сам закрывается через 10 минут без действий.</p></div>" +
       "<div class='sect'><h4>Бэкапы</h4><p>«Экспорт бэкапа» — полный файл, секреты в нём остаются зашифрованными, его можно спокойно держать в облаке. «Экспорт без доступов» — та же база без логинов и секретов, годится, чтобы поделиться списком платформ.</p></div>" +
       "<div class='sect'><h4>Оплата</h4><p>Платить можно двумя сущностями. <b>Сервис оплаты</b> (посредник, конвертация, виртуальные карты) — это полноценная карточка каталога в категории «Оплата»: со своим сайтом, логином, паролем в сейфе, комиссией и заметками. В его карточке видно, что через него оплачивается и на сколько в месяц. <b>Карта или счёт</b> — простая метка без сайта и логина.</p>" +
@@ -2147,3 +2305,13 @@ load();
 migratePayments();
 document.documentElement.setAttribute("data-theme", state.theme === "light" ? "light" : "dark");
 render();
+initCloudSync();
+function resumeCloudSync() {
+  if (cloudSyncReady) {
+    if (localHasUnsyncedChanges()) scheduleCloudSave();
+    else refreshCloudState();
+  } else initCloudSync();
+}
+window.addEventListener("online", resumeCloudSync);
+window.addEventListener("offline", () => setCloudStatus("local", "Только локально", "Нет подключения к сети"));
+window.addEventListener("focus", resumeCloudSync);

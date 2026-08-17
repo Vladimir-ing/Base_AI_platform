@@ -6,6 +6,11 @@ body.auth-pending > :not(.auth-gate):not(script){visibility:hidden}
 .auth-session{display:flex;align-items:center;gap:8px;max-width:230px}
 .auth-session span{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px}
 .auth-session .btn{padding:8px 10px}
+.cloud-sync{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border-radius:9px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:12px;white-space:nowrap}
+.cloud-dot{width:7px;height:7px;border-radius:50%;background:var(--grey);flex:none}
+.cloud-sync.pending .cloud-dot{background:var(--warn)}
+.cloud-sync.saved .cloud-dot{background:var(--ok)}
+.cloud-sync.local .cloud-dot{background:var(--danger)}
 .auth-page{display:grid;place-items:center;padding:24px}
 .auth-shell{width:100%;max-width:430px}
 .auth-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:24px}
@@ -27,4 +32,4 @@ body.auth-pending > :not(.auth-gate):not(script){visibility:hidden}
 .auth-message{margin-top:16px;padding:10px 12px;border-radius:10px;font-size:13px;background:var(--accSoft);color:var(--accTxt)}
 .auth-message.error{background:var(--dangerSoft);color:var(--danger)}
 .auth-message.success{background:var(--okSoft);color:var(--ok)}
-@media (max-width:640px){.auth-session{order:10;max-width:100%;margin-left:auto}.auth-card{padding:20px}.auth-page{padding:16px}}
+@media (max-width:640px){.cloud-sync{order:9}.auth-session{order:10;max-width:100%;margin-left:auto}.auth-card{padding:20px}.auth-page{padding:16px}}
