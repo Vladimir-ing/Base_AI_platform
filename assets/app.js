@@ -22,6 +22,7 @@ const STATUS_CLASS = {"Активна":"ok","Пробный период":"warn"
 const AUTH_METHODS = ["","Google","Email + пароль","Телефон","Apple ID","SSO / корпоративный"];
 const CURRENCIES = ["₽","$","€"];
 const PERIODS = ["месяц","год","разово"];
+const USAGE_OPTIONS = ["", "Ежедневно", "Еженедельно", "Редко", "Не использую"];
 
 /* ==================================================================
    Фирменные иконки: цвет платформы + монограмма
@@ -136,7 +137,7 @@ function blank() {
     purpose: "", strengths: "", tips: [], regNotes: "", freeLimits: "",
     account: { login: "", authMethod: "", twoFactor: false, passwordRef: "" },
     plan: { tier: "", price: "", currency: "₽", period: "месяц", renewsOn: "", paymentId: "", paymentLabel: "" },
-    rating: 0, pinned: false, tags: [], secret: null,
+    rating: 0, usage: "", pinned: false, tags: [], secret: null,
     createdAt: todayISO(), updatedAt: todayISO(), checkedAt: ""
   };
 }
@@ -149,6 +150,7 @@ function normalize(p) {
   o.tips = Array.isArray(o.tips) ? o.tips.filter(Boolean) : (o.tips ? String(o.tips).split("\n").filter(Boolean) : []);
   o.tags = Array.isArray(o.tags) ? o.tags.filter(Boolean) : (o.tags ? String(o.tags).split(",").map(s => s.trim()).filter(Boolean) : []);
   o.rating = Number(o.rating) || 0;
+  o.usage = USAGE_OPTIONS.includes(o.usage) ? o.usage : "";
   o.pinned = !!o.pinned;
   if (CATS.every(c => c[0] !== o.category)) o.category = "Прочее";
   if (!STATUSES.includes(o.status)) o.status = "Не зарегистрирован";
@@ -540,7 +542,7 @@ function matches(p) {
   const q = filter.q.trim().toLowerCase();
   if (!q) return true;
   const hay = [p.name, p.category, p.purpose, p.strengths, p.regNotes, p.freeLimits,
-    p.tips.join(" "), p.tags.join(" "), p.account.login, p.plan.tier, payLabel(p), p.url].join(" ").toLowerCase();
+    p.tips.join(" "), p.tags.join(" "), p.usage, p.account.login, p.plan.tier, payLabel(p), p.url].join(" ").toLowerCase();
   return hay.includes(q);
 }
 function visible() {
@@ -584,6 +586,54 @@ function renderStats() {
     ["Бесплатных в работе", free, "используются без оплаты"]
   ].map(r => "<div class='stat'><div class='k'>" + r[0] + "</div><div class='v'>" + esc(String(r[1])) +
       "<small>" + esc(String(r[2])) + "</small></div></div>").join("");
+}
+
+function daysUntil(date) {
+  if (!date) return null;
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const d = new Date(date); d.setHours(0, 0, 0, 0);
+  return Math.round((d - now) / 86400000);
+}
+
+function attentionItems() {
+  const items = [];
+  state.platforms.forEach(p => {
+    if (p.status === "Пробный период") {
+      items.push({ priority: 1, icon: "⏳", p: p, text: "Пробный период — проверьте условия и дату окончания" });
+    }
+
+    const d = nextCharge(p);
+    const left = daysUntil(d);
+    if (d && left != null && left >= 0 && left <= 7) {
+      const when = left === 0 ? "сегодня" : left === 1 ? "завтра" : "через " + left + " дн.";
+      items.push({ priority: 0, icon: "💳", p: p, text: "Списание " + when + (priceLabel(p) ? " · " + priceLabel(p) : "") });
+    }
+
+    const cost = monthlyCost(p);
+    if (cost && p.usage === "Не использую") {
+      items.push({ priority: 0, icon: "⚠", p: p, text: "Платная подписка не используется · " + priceLabel(p) });
+    } else if (cost && p.usage === "Редко") {
+      items.push({ priority: 2, icon: "↘", p: p, text: "Используется редко · проверьте, стоит ли продлевать" });
+    }
+  });
+  items.sort((a, b) => a.priority - b.priority || a.p.name.localeCompare(b.p.name, "ru"));
+  return items.slice(0, 8);
+}
+
+function renderAttention() {
+  const box = $("#attention");
+  const items = attentionItems();
+  box.hidden = !items.length;
+  if (!items.length) { box.innerHTML = ""; return; }
+  box.innerHTML =
+    "<div class='attention-head'><div><h2>Требуют внимания</h2>" +
+    "<p>Списания, пробные периоды и подписки с низким использованием</p></div>" +
+    "<span class='badge acc'>" + items.length + "</span></div>" +
+    "<div class='attention-list'>" + items.map(x =>
+      "<button class='attention-item' type='button' data-attention='" + esc(x.p.id) + "'>" +
+        "<span class='attention-icon'>" + x.icon + "</span><span><b>" + esc(x.p.name) + "</b>" +
+        "<span>" + esc(x.text) + "</span></span></button>"
+    ).join("") + "</div>";
 }
 
 function renderFilters() {
@@ -681,7 +731,7 @@ function renderBanners() {
     "</div>").join("");
 }
 
-function render() { renderStats(); renderFilters(); renderGrid(); renderLock(); renderBanners(); }
+function render() { renderStats(); renderAttention(); renderFilters(); renderGrid(); renderLock(); renderBanners(); }
 
 /* ==================================================================
    Карточка платформы (просмотр)
@@ -772,6 +822,7 @@ async function openCard(id) {
   if (pe && pe.kind === "service") kv.push(["Чем платим",
     "<button class='btn sm' type='button' data-act='goPay' data-id='" + pe.id + "'>💳 " + esc(pe.name) + " →</button>", true]);
   else if (pe) kv.push(["Чем платим", pe.name + (pe.note ? " — " + pe.note : "")]);
+  if (p.usage) kv.push(["Использование", p.usage]);
   if (p.checkedAt) kv.push(["Цены проверял", fmtDate(p.checkedAt)]);
   if (p.tags.length) kv.push(["Теги", p.tags.join(", ")]);
   if (kv.length) h += "<div class='sect'><h4>Тариф и учёт</h4><dl class='kv'>" +
@@ -881,6 +932,9 @@ function fieldsHTML(p, sec, secState) {
         "<span class='tip'>Сервис-посредник или карта. Новый добавляется прямо здесь, ⚙ — управление списком.</span></div>" +
     "</div></div>" +
 
+    "<div class='f'><label>Частота использования</label><select id='fUsage'>" +
+      [["", "не указано"], ["Ежедневно", "ежедневно"], ["Еженедельно", "еженедельно"], ["Редко", "редко"], ["Не использую", "не использую"]].map(o =>
+        "<option value='" + o[0] + "'" + (p.usage === o[0] ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select></div>" +
     "<div class='f'><label>Моя оценка</label><select id='fRating'>" +
       [0, 1, 2, 3, 4, 5].map(n => "<option value='" + n + "'" + (p.rating === n ? " selected" : "") + ">" +
         (n ? "★".repeat(n) : "без оценки") + "</option>").join("") + "</select></div>" +
@@ -954,6 +1008,7 @@ async function saveEdit() {
     paymentId: ["__new", "__newsvc", "__manage"].includes($("#fPay").value) ? "" : $("#fPay").value,
     paymentLabel: ""
   };
+  p.usage = $("#fUsage").value;
   p.rating = Number($("#fRating").value) || 0;
   p.pinned = $("#fPin").checked;
   p.tags = $("#fTags").value.split(",").map(s => s.trim()).filter(Boolean);
@@ -1381,6 +1436,13 @@ function showHelp() {
    События
    ================================================================== */
 $("#q").addEventListener("input", e => { filter.q = e.target.value; renderStats(); renderGrid(); });
+
+$("#attention").addEventListener("click", e => {
+  const item = e.target.closest("[data-attention]");
+  if (!item) return;
+  $("#cardOv").dataset.mode = "view";
+  openCard(item.dataset.attention);
+});
 
 $("#filters").addEventListener("click", e => {
   const chip = e.target.closest(".chip");

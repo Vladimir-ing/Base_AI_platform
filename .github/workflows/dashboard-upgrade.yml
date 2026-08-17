@@ -1,0 +1,43 @@
+name: Dashboard attention upgrade
+
+on:
+  push:
+    branches:
+      - agent/dashboard-attention-usage
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/dashboard-attention-usage
+          fetch-depth: 0
+
+      - name: Apply deterministic dashboard upgrade
+        run: python tools/upgrade_dashboard.py
+
+      - name: Check JavaScript syntax
+        run: node --check assets/app.js
+
+      - name: Verify structure
+        run: |
+          grep -q 'id="attention"' ai-platforms.html
+          grep -q 'function renderAttention()' assets/app.js
+          grep -q 'fUsage' assets/app.js
+
+      - name: Commit generated changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ai-platforms.html assets/app.css assets/app.js
+          if git diff --cached --quiet; then
+            echo "No generated changes"
+          else
+            git commit -m "Add attention dashboard and usage tracking"
+            git push origin HEAD:agent/dashboard-attention-usage
+          fi
