@@ -287,3 +287,6 @@ h1,h2,h3,h4{margin:0;line-height:1.25}
 @keyframes corePulse{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:.95;transform:scale(1.05)}}
 @media (prefers-reduced-motion:reduce){.core-logo:before,.core-logo:after{animation:none}}
 @media (max-width:760px){.lang-switch{order:5}.brand h1{letter-spacing:.035em}}
+
+/* AI CORE authenticated account chip */
+.auth-account{display:flex;align-items:center;gap:8px;margin-left:auto;max-width:260px}.auth-account span{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px}@media(max-width:900px){.auth-account span{display:none}}
