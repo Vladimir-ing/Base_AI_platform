@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>База AI-платформ</title>
+<title>AI CORE — Your AI Control Center</title>
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
@@ -11,30 +11,34 @@
 
   <div class="topbar">
     <div class="brand">
-      <div class="logo">◆</div>
+      <div class="logo core-logo" aria-hidden="true"><span></span></div>
       <div>
-        <h1>База AI-платформ</h1>
-        <p id="brandSub">личный справочник доступов и приёмов</p>
+        <h1><span class="brand-ai">AI</span> CORE</h1>
+        <p id="brandSub" data-i18n="brand.subtitle">Your AI Control Center</p>
       </div>
     </div>
-    <div class="search"><span>⌕</span><input id="q" type="search" placeholder="Поиск: название, задача, приём…" autocomplete="off"></div>
+    <div class="search"><span>⌕</span><input id="q" type="search" placeholder="Поиск: название, задача, приём…" data-i18n-placeholder="search.placeholder" autocomplete="off"></div>
+    <div class="lang-switch" id="langSwitch" role="group" aria-label="Language">
+      <button type="button" data-lang="ru">RU</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
     <button class="lockchip" id="lockChip" type="button"></button>
-    <button class="btn" id="assistantBtn" type="button">✦ Помощник</button>
-    <button class="btn" id="compareBtn" type="button">⇄ Сравнить</button>
-    <button class="btn primary" id="addBtn" type="button">+ Платформа</button>
+    <button class="btn" id="assistantBtn" type="button" data-i18n="top.assistant">✦ Помощник</button>
+    <button class="btn" id="compareBtn" type="button" data-i18n="top.compare">⇄ Сравнить</button>
+    <button class="btn primary" id="addBtn" type="button" data-i18n="top.add">+ Платформа</button>
     <details class="menu" id="menu">
-      <summary class="btn ghost" title="Меню">⋯</summary>
+      <summary class="btn ghost" title="Меню" data-i18n-title="top.menuTitle">⋯</summary>
       <div class="menu-pop">
-        <button type="button" data-act="export">Экспорт бэкапа (с секретами)</button>
-        <button type="button" data-act="exportOpen">Экспорт без доступов</button>
-        <button type="button" data-act="import">Импорт из файла…</button>
+        <button type="button" data-act="export" data-i18n="menu.exportSecure">Экспорт бэкапа (с секретами)</button>
+        <button type="button" data-act="exportOpen" data-i18n="menu.exportOpen">Экспорт без доступов</button>
+        <button type="button" data-act="import" data-i18n="menu.import">Импорт из файла…</button>
         <hr>
-        <button type="button" data-act="payments">Оплата: сервисы и карты…</button>
-        <button type="button" data-act="master">Мастер-пароль…</button>
-        <button type="button" data-act="seed">Досыпать каталог платформ</button>
-        <button type="button" data-act="theme">Сменить тему</button>
+        <button type="button" data-act="payments" data-i18n="menu.payments">Оплата: сервисы и карты…</button>
+        <button type="button" data-act="master" data-i18n="menu.master">Мастер-пароль…</button>
+        <button type="button" data-act="seed" data-i18n="menu.seed">Досыпать каталог платформ</button>
+        <button type="button" data-act="theme" data-i18n="menu.theme">Сменить тему</button>
         <hr>
-        <button type="button" data-act="help">Как это работает</button>
+        <button type="button" data-act="help" data-i18n="menu.help">Как это работает</button>
         <div class="hint" id="storeHint"></div>
       </div>
     </details>
@@ -46,7 +50,7 @@
   <section class="economics" id="economics" hidden></section>
   <div class="filters" id="filters"></div>
   <div class="grid" id="grid"></div>
-  <div class="empty" id="empty" hidden>Ничего не найдено. Сбросьте поиск или фильтры.</div>
+  <div class="empty" id="empty" hidden data-i18n="empty.search">Ничего не найдено. Сбросьте поиск или фильтры.</div>
 </div>
 
 <!-- карточка платформы -->
