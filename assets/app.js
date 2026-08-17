@@ -248,6 +248,31 @@ let cloudSyncPending = false;
 let cloudRemoteUpdatedAt = "";
 let cloudSaveTimer = null;
 let syncMeta = readSyncMeta();
+let accountAccess = null;
+
+async function initAccountAccess() {
+  const chip = $("#accessChip");
+  try {
+    const { data, error } = await window.supabaseClient.functions.invoke("account-access", { body: {} });
+    if (error || !data) throw error || new Error("access_unavailable");
+    accountAccess = data;
+    if (chip) {
+      chip.className = "access-chip " + (data.is_admin ? "admin" : (data.free_preview ? "active" : data.status));
+      if (data.is_admin) chip.textContent = "Администратор";
+      else if (data.free_preview) chip.textContent = "Бесплатный полный доступ";
+      else if (data.status === "trialing") chip.textContent = "Trial Max: " + data.days_remaining + " дн.";
+      else chip.textContent = "Тариф " + String(data.plan || "Basic").replace(/^./, c => c.toUpperCase());
+      const platformText = data.platform_limit == null ? "без лимита" : "до " + data.platform_limit + " платформ";
+      const llmText = data.llm_remaining == null ? "LLM без лимита" : "LLM осталось: " + data.llm_remaining;
+      chip.title = platformText + "; " + llmText;
+    }
+    const adminButton = $("#adminBtn");
+    if (adminButton) adminButton.hidden = !data.is_admin;
+    renderBanners();
+  } catch (_) {
+    if (chip) { chip.className = "access-chip"; chip.textContent = "Тариф недоступен"; }
+  }
+}
 
 function normalizeStateData(d) {
   d = d && typeof d === "object" ? d : {};
@@ -970,7 +995,21 @@ async function callRemoteAssistant(query) {
     throw new Error(code);
   }
   if (!data?.answer) throw new Error(data?.error || "empty_answer");
+  if (typeof data.llm_remaining === "number" && accountAccess) {
+    accountAccess.llm_remaining = data.llm_remaining;
+    const chip = $("#accessChip");
+    if (chip) chip.title = (accountAccess.platform_limit == null ? "Платформы без лимита" : "до " + accountAccess.platform_limit + " платформ") + "; LLM осталось: " + data.llm_remaining;
+  }
   return data;
+}
+
+function assistantErrorText(code) {
+  return ({
+    plan_llm_limit: "месячный лимит LLM-запросов исчерпан",
+    access_unavailable: "не удалось проверить тариф",
+    plan_unavailable: "настройки тарифа временно недоступны",
+    usage_unavailable: "не удалось проверить лимит запросов"
+  })[code] || code;
 }
 
 async function flowLocalAssistant() {
@@ -999,7 +1038,7 @@ async function flowLocalAssistant() {
           out.innerHTML = assistantRemoteResult(data);
         } catch (err) {
           const code = String(err?.message || err || "error");
-          out.innerHTML = "<div class='assistant-fallback'>LLM сейчас недоступен (" + esc(code) + "). Показан локальный анализ.</div>" + assistantAnswer(q);
+          out.innerHTML = "<div class='assistant-fallback'>LLM сейчас недоступен (" + esc(assistantErrorText(code)) + "). Показан локальный анализ.</div>" + assistantAnswer(q);
         }
       };
 
@@ -1167,6 +1206,13 @@ function renderLock() {
 
 function renderBanners() {
   const b = [];
+  if (accountAccess && accountAccess.free_preview) {
+    b.push(["", "Сейчас действует бесплатный ранний доступ: все функции и LLM-помощник доступны без тарифных ограничений.", ""]);
+  } else if (accountAccess && accountAccess.status === "trialing") {
+    b.push(["", "Полный trial Max: осталось " + accountAccess.days_remaining + " дн. После него автоматически включится бесплатный Basic на 10 платформ.", ""]);
+  } else if (accountAccess && accountAccess.platform_limit != null && state.platforms.length >= accountAccess.platform_limit) {
+    b.push(["", "Лимит тарифа " + accountAccess.plan.toUpperCase() + ": " + accountAccess.platform_limit + " платформ. Существующие данные доступны; для новых платформ понадобится освободить место или повысить тариф.", ""]);
+  }
   if (!storageOk) b.push(["bad", "<b>Браузер не даёт сохранять данные.</b> Всё, что вы введёте, живёт только до закрытия вкладки — сделайте «Экспорт бэкапа» перед закрытием.", ""]);
   const hasSecrets = state.platforms.some(p => p.secret);
   if (hasSecrets && !state.lastExport) b.push(["", "У вас есть сохранённые секреты, но нет независимого файла бэкапа. Облачная копия уже работает; экспорт полезен для дополнительного восстановления.", "export"]);
@@ -1396,6 +1442,10 @@ function fieldsHTML(p, sec, secState) {
 
 async function openEdit(id) {
   const isNew = !id;
+  if (isNew && accountAccess && accountAccess.platform_limit != null && state.platforms.length >= accountAccess.platform_limit) {
+    toast("Достигнут лимит тарифа " + accountAccess.plan.toUpperCase() + ": " + accountAccess.platform_limit + " платформ");
+    return;
+  }
   const src = isNew ? blank() : byId(id);
   if (!src) return;
   const p = JSON.parse(JSON.stringify(src));
@@ -2316,6 +2366,7 @@ load();
 migratePayments();
 document.documentElement.setAttribute("data-theme", state.theme === "light" ? "light" : "dark");
 render();
+initAccountAccess();
 initCloudSync();
 function resumeCloudSync() {
   if (cloudSyncReady) {

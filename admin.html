@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Администрирование — База AI-платформ</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/auth.css">
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body class="auth-pending" data-app-script="assets/admin.js">
+<div class="auth-gate" id="authGate" role="status" aria-live="polite"><div class="auth-gate-mark">◆</div><p>Проверяю права администратора…</p></div>
+<main class="admin-wrap">
+  <header class="admin-topbar">
+    <div class="brand"><div class="logo">◆</div><div><h1>Администрирование</h1><p>пользователи, тарифы и использование LLM</p></div></div>
+    <a class="btn" href="ai-platforms.html">← К базе</a>
+    <div class="auth-session"><span id="authUser"></span><button class="btn ghost" id="logoutBtn" type="button">Выйти</button></div>
+  </header>
+  <section class="admin-message" id="adminMessage" role="status">Загружаю статистику…</section>
+  <section class="admin-stats" id="adminStats" hidden></section>
+  <section class="admin-panel" id="plansPanel" hidden><div class="admin-panel-head"><div><h2>Будущие тарифы</h2><p id="productMode">Цены сохранены, продажи пока выключены</p></div></div><div class="plan-grid" id="planGrid"></div></section>
+  <section class="admin-panel" id="usersPanel" hidden>
+    <div class="admin-panel-head"><div><h2>Пользователи</h2><p id="generatedAt"></p></div><div class="admin-tools"><input id="userSearch" type="search" placeholder="Поиск по email"><select id="statusFilter"><option value="">Все статусы</option><option value="preview">Бесплатный доступ</option><option value="trialing">Trial</option><option value="active">Активные</option><option value="past_due">Просрочка</option><option value="canceled">Отменённые</option></select><button class="btn" id="refreshBtn" type="button">Обновить</button></div></div>
+    <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Пользователь</th><th>Регистрация</th><th>Последняя активность</th><th>Статус</th><th>Trial до</th><th>LLM за 30 дней</th></tr></thead><tbody id="usersBody"></tbody></table></div>
+    <div class="admin-empty" id="usersEmpty" hidden>Пользователи не найдены.</div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js"></script>
+<script src="assets/supabase-client.js"></script>
+<script src="assets/route-guard.js"></script>
+</body>
+</html>
