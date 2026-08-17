@@ -11,6 +11,7 @@ body.auth-pending > :not(.auth-gate):not(script){visibility:hidden}
 .access-chip.admin,.access-chip.active{background:var(--okSoft);border-color:transparent;color:var(--ok)}
 .access-chip.trialing{background:var(--warnSoft);border-color:transparent;color:var(--warn)}
 .admin-link{color:var(--accTxt);text-decoration:none}
+.admin-link[hidden]{display:none!important}
 .cloud-dot{width:7px;height:7px;border-radius:50%;background:var(--grey);flex:none}
 .cloud-sync.pending .cloud-dot{background:var(--warn)}
 .cloud-sync.saved .cloud-dot{background:var(--ok)}
