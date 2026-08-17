@@ -9,6 +9,7 @@ on:
       - "assets/app.js"
       - "supabase/migrations/**"
       - "tools/check-cloud-isolation.mjs"
+      - "tools/check-cloud-conflicts.mjs"
       - ".github/workflows/cloud-sync-isolation.yml"
 
 permissions:
@@ -26,3 +27,5 @@ jobs:
         run: node --check assets/app.js
       - name: Check account isolation and RLS contract
         run: node tools/check-cloud-isolation.mjs
+      - name: Check optimistic cloud concurrency contract
+        run: node tools/check-cloud-conflicts.mjs
