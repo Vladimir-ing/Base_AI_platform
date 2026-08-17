@@ -47,12 +47,6 @@ function tokenCostUsd(inputTokens: number, outputTokens: number, inputRate: numb
   return (inputTokens * effectiveInputRate + outputTokens * effectiveOutputRate) / 1_000_000;
 }
 
-function nextUtcDayIso() {
-  const next = new Date();
-  next.setUTCHours(24, 0, 0, 0);
-  return next.toISOString();
-}
-
 async function markUsage(server: any, id: number | null, values: Record<string, unknown>) {
   if (id != null) await server.from("llm_usage_events").update(values).eq("id", id);
 }
@@ -87,7 +81,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: settings, error: settingsError } = await server
     .from("product_settings")
-    .select("free_preview_enabled,free_preview_llm_monthly_limit,daily_llm_budget_usd,llm_input_usd_per_million,llm_output_usd_per_million,llm_max_output_tokens")
+    .select("free_preview_enabled,free_preview_llm_monthly_limit,llm_input_usd_per_million,llm_output_usd_per_million,llm_max_output_tokens")
     .eq("singleton", true)
     .single();
   if (settingsError || !settings) return json(req, { error: "settings_unavailable" }, 503);
@@ -102,8 +96,9 @@ Deno.serve(async (req: Request) => {
   }
 
   let llmRemaining: number | null = null;
+  let monthlyLimit: number | null = null;
   if (!access.is_admin && !trialActive) {
-    let monthlyLimit: number | null = isPreview ? Number(settings.free_preview_llm_monthly_limit) : null;
+    monthlyLimit = isPreview ? Number(settings.free_preview_llm_monthly_limit) : null;
     if (!isPreview) {
       const { data: planData, error: planError } = await server
         .from("billing_plans").select("llm_monthly_limit").eq("code", effectivePlan).single();
@@ -173,20 +168,17 @@ Deno.serve(async (req: Request) => {
     outputRate,
   ) * 1.15).toFixed(8));
 
-  const reservation = await server.rpc("reserve_llm_daily_budget", {
+  const reservation = await server.rpc("start_llm_usage_event", {
     p_user_id: userId,
     p_model: model,
     p_estimated_cost_usd: estimatedCostUsd,
+    p_monthly_limit: monthlyLimit,
   });
   const reserved = Array.isArray(reservation.data) ? reservation.data[0] : reservation.data;
-  if (reservation.error || !reserved) return json(req, { error: "budget_unavailable" }, 503);
+  if (reservation.error || !reserved) return json(req, { error: "usage_unavailable" }, 503);
   if (!reserved.allowed) {
-    return json(req, {
-      error: "daily_budget_exhausted",
-      budget_usd: Number(reserved.budget_usd),
-      remaining_usd: Number(reserved.remaining_usd),
-      resets_at: nextUtcDayIso(),
-    }, 429);
+    const errorCode = isPreview ? "preview_llm_limit" : "plan_llm_limit";
+    return json(req, { error: errorCode, llm_remaining: 0 }, 429);
   }
   const usageId = Number(reserved.usage_id);
 
@@ -239,6 +231,5 @@ Deno.serve(async (req: Request) => {
     recommended_ids: ids.filter((id: string) => knownIds.has(id)),
     model,
     llm_remaining: llmRemaining,
-    daily_budget_remaining_usd: Math.max(0, Number(reserved.budget_usd) - Number(reserved.spent_before_usd) - actualCostUsd),
   });
 });

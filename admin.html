@@ -18,9 +18,8 @@
   </header>
   <section class="admin-message" id="adminMessage" role="status">Загружаю статистику…</section>
   <section class="admin-stats" id="adminStats" hidden></section>
-  <section class="admin-panel budget-panel" id="budgetPanel" hidden>
-    <div class="budget-copy"><span>Контроль расходов LLM</span><strong id="budgetRemaining">—</strong><small id="budgetDetails">—</small></div>
-    <div class="budget-meter" aria-hidden="true"><span id="budgetMeter"></span></div>
+  <section class="admin-panel budget-panel" id="costPanel" hidden>
+    <div class="budget-copy"><span>Расходы LLM сегодня (UTC)</span><strong id="costToday">—</strong><small id="costDetails">—</small></div>
     <a class="btn" href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">Баланс OpenAI ↗</a>
   </section>
   <section class="admin-panel" id="plansPanel" hidden><div class="admin-panel-head"><div><h2>Будущие тарифы</h2><p id="productMode">Цены сохранены, продажи пока выключены</p></div></div><div class="plan-grid" id="planGrid"></div></section>

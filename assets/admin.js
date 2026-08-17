@@ -20,14 +20,10 @@ function renderStats(summary) {
   $("#adminStats").hidden = false;
 }
 
-function renderBudget(summary) {
-  const budget=Number(summary.llm_daily_budget_usd||0), spent=Number(summary.llm_cost_today_usd||0), remaining=Math.max(0,Number(summary.llm_daily_remaining_usd||0));
-  const percent=budget>0?Math.min(100,(spent/budget)*100):100;
-  $("#budgetRemaining").textContent=dollars(remaining)+" осталось из "+dollars(budget);
-  $("#budgetDetails").textContent="Сегодня потрачено: "+dollars(spent)+" · сброс "+formatDate(summary.llm_budget_resets_at,true)+" (UTC)";
-  $("#budgetMeter").style.width=percent+"%";
-  $("#budgetMeter").style.background=percent>=80?"var(--danger)":percent>=60?"var(--warn)":"var(--ok)";
-  $("#budgetPanel").hidden=false;
+function renderCosts(summary) {
+  $("#costToday").textContent=dollars(summary.llm_cost_today_usd);
+  $("#costDetails").textContent="За последние 30 дней: "+dollars(summary.llm_cost_30d_usd)+" · это расчёт по использованным токенам";
+  $("#costPanel").hidden=false;
 }
 
 function renderPlans() {
@@ -54,7 +50,7 @@ async function loadDashboard() {
   $("#refreshBtn").disabled=true; $("#adminMessage").hidden=false; $("#adminMessage").className="admin-message"; $("#adminMessage").textContent="Загружаю статистику…";
   const {data,error}=await window.supabaseClient.functions.invoke("admin-dashboard",{body:{}}); $("#refreshBtn").disabled=false;
   if(error||!data){let code=error?.message||"dashboard_unavailable";if(error?.context&&typeof error.context.json==="function"){try{code=(await error.context.json())?.error||code}catch(_){}}if(code==="forbidden"){window.location.replace("ai-platforms.html");return}$("#adminMessage").className="admin-message error";$("#adminMessage").textContent="Не удалось загрузить админ-панель: "+code;return}
-  dashboard=data; $("#adminMessage").hidden=true; $("#usersPanel").hidden=false; $("#generatedAt").textContent="Обновлено: "+formatDate(data.generated_at,true); renderStats(data.summary); renderBudget(data.summary); renderPlans(); renderUsers();
+  dashboard=data; $("#adminMessage").hidden=true; $("#usersPanel").hidden=false; $("#generatedAt").textContent="Обновлено: "+formatDate(data.generated_at,true); renderStats(data.summary); renderCosts(data.summary); renderPlans(); renderUsers();
 }
 
 $("#userSearch").addEventListener("input",renderUsers); $("#statusFilter").addEventListener("change",renderUsers); $("#refreshBtn").addEventListener("click",loadDashboard); loadDashboard();
