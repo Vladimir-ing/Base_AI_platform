@@ -683,6 +683,76 @@ function renderEconomics() {
     ).join("") + "</div>";
 }
 
+
+function compareField(label, values) {
+  return "<tr><th>" + esc(label) + "</th>" + values.map(v => "<td>" + v + "</td>").join("") + "</tr>";
+}
+
+function compareTable(platforms) {
+  const heads = platforms.map(p => "<th><div class='compare-name'>" + iconHTML(p) + "<span>" + esc(p.name) + "</span></div></th>").join("");
+  const price = platforms.map(p => esc(priceLabel(p) || (p.status === "Активна" ? "бесплатно" : "—")));
+  const rating = platforms.map(p => p.rating ? "<span class='stars'>" + "★".repeat(p.rating) + "</span>" : "—");
+  const usage = platforms.map(p => esc(p.usage || "не указано"));
+  const value = platforms.map(p => esc(valueVerdict(p)));
+  const category = platforms.map(p => esc(p.category || "—"));
+  const status = platforms.map(p => "<span class='badge " + (STATUS_CLASS[p.status] || "") + "'>" + esc(p.status) + "</span>");
+  const strengths = platforms.map(p => "<div class='compare-text'>" + esc(p.strengths || "—") + "</div>");
+  const purpose = platforms.map(p => "<div class='compare-text'>" + esc(p.purpose || "—") + "</div>");
+
+  return "<div class='compare-table-wrap'><table class='compare-table'><thead><tr><th>Параметр</th>" + heads + "</tr></thead><tbody>" +
+    compareField("Категория", category) +
+    compareField("Статус", status) +
+    compareField("Цена", price) +
+    compareField("Рейтинг", rating) +
+    compareField("Использование", usage) +
+    compareField("Ценность", value) +
+    compareField("Назначение", purpose) +
+    compareField("Сильные стороны", strengths) +
+    "</tbody></table></div>";
+}
+
+async function flowComparePlatforms() {
+  const candidates = state.platforms
+    .filter(p => p.category !== PAY_CAT)
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+
+  if (candidates.length < 2) {
+    toast("Для сравнения нужно минимум две платформы");
+    return;
+  }
+
+  const picker = "<div class='compare-picker'><p>Выберите от 2 до 4 платформ.</p><div class='compare-options'>" +
+    candidates.map(p => "<label class='compare-option'><input type='checkbox' name='cmp' value='" + esc(p.id) + "'>" +
+      iconHTML(p) + "<span><b>" + esc(p.name) + "</b><small>" + esc(p.category) + " · " + esc(p.status) + "</small></span></label>").join("") +
+    "</div></div>";
+
+  const ids = await modal({
+    title: "Сравнить AI-сервисы",
+    sub: "Цена, использование, рейтинг и ценность",
+    body: picker,
+    buttons: [{ label: "Отмена", value: null }, { spacer: true }, {
+      label: "Сравнить", variant: "primary",
+      validate: () => {
+        const n = document.querySelectorAll("input[name='cmp']:checked").length;
+        if (n < 2) return "Выберите минимум две платформы.";
+        if (n > 4) return "Можно сравнить максимум четыре платформы.";
+        return null;
+      },
+      value: () => Array.from(document.querySelectorAll("input[name='cmp']:checked")).map(x => x.value)
+    }]
+  });
+  if (!ids) return;
+
+  const platforms = ids.map(id => state.platforms.find(p => p.id === id)).filter(Boolean);
+  await modal({
+    title: "Сравнение платформ",
+    sub: platforms.map(p => p.name).join(" · "),
+    body: "<div class='compare-result'>" + compareTable(platforms) + "</div>",
+    buttons: [{ label: "Закрыть", value: null }]
+  });
+}
+
 function renderFilters() {
   const counts = {};
   state.platforms.forEach(p => counts[p.category] = (counts[p.category] || 0) + 1);
@@ -1531,6 +1601,7 @@ $("#grid").addEventListener("click", async e => {
   if (t && t.dataset.id) { $("#cardOv").dataset.mode = "view"; openCard(t.dataset.id); }
 });
 
+$("#compareBtn").addEventListener("click", flowComparePlatforms);
 $("#addBtn").addEventListener("click", () => openEdit(null));
 
 $("#lockChip").addEventListener("click", () => {
