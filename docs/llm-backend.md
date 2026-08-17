@@ -48,3 +48,5 @@ The Edge Function:
 - limits question and catalog sizes;
 - calls the OpenAI Responses API server-side with `store: false`;
 - returns answer text plus a small list of platform ids so the UI can render clickable recommendations.
+- records request status and token counts for admin statistics, but never stores the question, answer, catalog payload, login, or secret;
+- reads the server-managed product mode and plan. During free preview, all authenticated users have product-level unlimited access; future Basic and Pro monthly limits are already defined but disabled.

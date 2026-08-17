@@ -6,7 +6,8 @@
 
   function loginUrl(reason) {
     const url = new URL("login.html", window.location.href);
-    url.searchParams.set("next", "ai-platforms.html");
+    const currentPage = window.location.pathname.split("/").pop() || "ai-platforms.html";
+    url.searchParams.set("next", currentPage);
     if (reason) url.searchParams.set("reason", reason);
     return url.href;
   }
@@ -39,7 +40,7 @@
     if (gate) gate.hidden = true;
 
     const appScript = document.createElement("script");
-    appScript.src = "assets/app.js";
+    appScript.src = document.body.dataset.appScript || "assets/app.js";
     appScript.async = false;
     appScript.onerror = () => {
       if (gate) {

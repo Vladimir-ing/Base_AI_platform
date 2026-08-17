@@ -9,7 +9,7 @@
 
   function appUrl() {
     const requested = params.get("next");
-    const safePath = requested === "ai-platforms.html" ? requested : "ai-platforms.html";
+    const safePath = ["ai-platforms.html", "admin.html"].includes(requested) ? requested : "ai-platforms.html";
     return new URL(safePath, window.location.href).href;
   }
 
