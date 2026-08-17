@@ -286,16 +286,27 @@ function normalizeStateData(d) {
   };
 }
 
+function createSeedState() {
+  const next = normalizeStateData({});
+  next.platforms = SEED.map((item, index) => {
+    const platform = normalize(item);
+    platform.id = "seed-" + index;
+    return platform;
+  });
+  return next;
+}
+
 function readSyncMeta() {
   try {
     const raw = localStorage.getItem(SYNC_META_KEY);
     const data = raw ? JSON.parse(raw) : {};
     return {
+      userId: typeof data.userId === "string" ? data.userId : "",
       localUpdatedAt: data.localUpdatedAt || "",
       lastSyncedLocalAt: data.lastSyncedLocalAt || ""
     };
   } catch (_) {
-    return { localUpdatedAt: "", lastSyncedLocalAt: "" };
+    return { userId: "", localUpdatedAt: "", lastSyncedLocalAt: "" };
   }
 }
 
@@ -319,6 +330,15 @@ function localHasUnsyncedChanges() {
   return new Date(syncMeta.localUpdatedAt).getTime() > new Date(syncMeta.lastSyncedLocalAt).getTime();
 }
 
+function resetLocalCacheForUser(userId) {
+  state = createSeedState();
+  cryptoKey = null;
+  cloudRemoteUpdatedAt = "";
+  syncMeta = { userId: userId, localUpdatedAt: "", lastSyncedLocalAt: "" };
+  writeSyncMeta();
+  save({ markDirty: false, sync: false });
+}
+
 function load() {
   let raw = null;
   try {
@@ -335,11 +355,7 @@ function load() {
       return;
     } catch (e) { /* повреждённые данные — уходим на сид */ }
   }
-  state.platforms = SEED.map((s, i) => {
-    const p = normalize(s);
-    p.id = "seed-" + i;
-    return p;
-  });
+  state = createSeedState();
   save({ markDirty: false, sync: false });
 }
 function save(options) {
@@ -363,6 +379,11 @@ function scheduleCloudSave() {
 
 async function pushStateToCloud() {
   if (!cloudSyncReady || !cloudUserId) return;
+  if (syncMeta.userId !== cloudUserId) {
+    cloudSyncReady = false;
+    setCloudStatus("local", "Только локально", "Локальный кэш принадлежит другому аккаунту");
+    return;
+  }
   if (cloudSyncBusy) { cloudSyncPending = true; return; }
   cloudSyncBusy = true;
   cloudSyncPending = false;
@@ -395,6 +416,7 @@ function applyCloudState(payload, updatedAt) {
   state = normalizeStateData(payload);
   cryptoKey = null;
   cloudRemoteUpdatedAt = updatedAt || "";
+  syncMeta.userId = cloudUserId;
   syncMeta.localUpdatedAt = updatedAt || new Date().toISOString();
   syncMeta.lastSyncedLocalAt = syncMeta.localUpdatedAt;
   writeSyncMeta();
@@ -427,12 +449,20 @@ async function refreshCloudState() {
 }
 
 async function initCloudSync() {
-  const startLocalVersion = syncMeta.localUpdatedAt;
+  let startLocalVersion = syncMeta.localUpdatedAt;
   setCloudStatus("pending", "Синхронизация…", "Проверяю облачное хранилище");
   try {
     const { data: authData, error: authError } = await window.supabaseClient.auth.getUser();
     if (authError || !authData.user) throw authError || new Error("Нет активной сессии");
     cloudUserId = authData.user.id;
+
+    if (syncMeta.userId && syncMeta.userId !== cloudUserId) {
+      resetLocalCacheForUser(cloudUserId);
+      startLocalVersion = syncMeta.localUpdatedAt;
+    } else if (!syncMeta.userId) {
+      syncMeta.userId = cloudUserId;
+      writeSyncMeta();
+    }
 
     const { data, error } = await fetchCloudState();
     if (error) throw error;
@@ -2365,12 +2395,16 @@ const SEED = [
 /* ==================================================================
    Старт
    ================================================================== */
-load();
-migratePayments();
-document.documentElement.setAttribute("data-theme", state.theme === "light" ? "light" : "dark");
-render();
-initAccountAccess();
-initCloudSync();
+async function startApp() {
+  load();
+  await initCloudSync();
+  migratePayments();
+  document.documentElement.setAttribute("data-theme", state.theme === "light" ? "light" : "dark");
+  render();
+  initAccountAccess();
+}
+
+startApp();
 function resumeCloudSync() {
   if (cloudSyncReady) {
     if (localHasUnsyncedChanges()) scheduleCloudSave();
