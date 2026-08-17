@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Вход — База AI-платформ</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/auth.css">
+</head>
+<body class="auth-page">
+<main class="auth-shell">
+  <section class="auth-card" aria-labelledby="authTitle">
+    <div class="auth-brand">
+      <div class="auth-brand-mark">◆</div>
+      <div>
+        <h1 id="authTitle">База AI-платформ</h1>
+        <p>Войдите, чтобы открыть личный справочник</p>
+      </div>
+    </div>
+
+    <div class="auth-tabs" id="authTabs" role="tablist" aria-label="Способ доступа">
+      <button class="auth-tab active" type="button" role="tab" aria-selected="true" data-auth-view="login">Вход</button>
+      <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-view="signup">Регистрация</button>
+    </div>
+
+    <form class="auth-form" id="loginForm" data-auth-panel="login">
+      <label for="loginEmail">Email</label>
+      <input id="loginEmail" name="email" type="email" autocomplete="email" required>
+      <label for="loginPassword">Пароль</label>
+      <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+      <button class="btn primary auth-submit" type="submit">Войти</button>
+      <button class="auth-link" id="forgotBtn" type="button">Забыли пароль?</button>
+    </form>
+
+    <form class="auth-form" id="signupForm" data-auth-panel="signup" hidden>
+      <label for="signupEmail">Email</label>
+      <input id="signupEmail" name="email" type="email" autocomplete="email" required>
+      <label for="signupPassword">Пароль</label>
+      <input id="signupPassword" name="password" type="password" autocomplete="new-password" minlength="8" required>
+      <small>Минимум 8 символов.</small>
+      <button class="btn primary auth-submit" type="submit">Создать аккаунт</button>
+    </form>
+
+    <form class="auth-form" id="recoveryForm" data-auth-panel="recovery" hidden>
+      <h2>Восстановление пароля</h2>
+      <p>Укажите email — Supabase отправит ссылку для смены пароля.</p>
+      <label for="recoveryEmail">Email</label>
+      <input id="recoveryEmail" name="email" type="email" autocomplete="email" required>
+      <button class="btn primary auth-submit" type="submit">Отправить ссылку</button>
+      <button class="auth-link" type="button" data-auth-view="login">Вернуться ко входу</button>
+    </form>
+
+    <form class="auth-form" id="newPasswordForm" data-auth-panel="new-password" hidden>
+      <h2>Новый пароль</h2>
+      <label for="newPassword">Пароль</label>
+      <input id="newPassword" name="password" type="password" autocomplete="new-password" minlength="8" required>
+      <button class="btn primary auth-submit" type="submit">Сохранить пароль</button>
+    </form>
+
+    <div class="auth-message" id="authMessage" role="status" aria-live="polite" hidden></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js"></script>
+<script src="assets/supabase-client.js"></script>
+<script src="assets/auth-page.js"></script>
+</body>
+</html>
