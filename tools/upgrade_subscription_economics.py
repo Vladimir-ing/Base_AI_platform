@@ -10,9 +10,9 @@ css = CSS.read_text(encoding="utf-8")
 html = HTML.read_text(encoding="utf-8")
 
 if 'id="economics"' not in html:
-    marker = '<div id="attention" hidden></div>\n'
+    marker = '  <section class="attention" id="attention" hidden></section>\n'
     assert marker in html, "attention marker not found"
-    html = html.replace(marker, marker + '  <div id="economics" hidden></div>\n', 1)
+    html = html.replace(marker, marker + '  <section class="economics" id="economics" hidden></section>\n', 1)
 
 if 'function subscriptionEconomics()' not in js:
     marker = '\nfunction renderFilters() {'
