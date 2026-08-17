@@ -1,0 +1,46 @@
+name: Local AI-base assistant upgrade
+
+on:
+  push:
+    branches:
+      - agent/local-ai-assistant
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/local-ai-assistant
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply upgrade
+        run: python tools/upgrade_local_assistant.py
+      - name: Check JavaScript syntax
+        run: node --check assets/app.js
+      - name: Structural checks
+        run: |
+          grep -q 'id="assistantBtn"' ai-platforms.html
+          grep -q 'async function flowLocalAssistant()' assets/app.js
+          grep -q 'function assistantAnswer(query)' assets/app.js
+          grep -q 'Работает локально' assets/app.js
+          grep -q '.assistant-ui{' assets/app.css
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet; then
+            echo 'No generated changes'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ai-platforms.html assets/app.js assets/app.css
+          git commit -m 'Add local AI-base assistant'
+          git push origin HEAD:agent/local-ai-assistant
