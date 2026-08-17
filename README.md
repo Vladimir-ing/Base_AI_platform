@@ -1,8 +1,10 @@
-# База AI-платформ
+# AI CORE
 
-Личный каталог AI-сервисов: назначение, рабочие приёмы, ссылки, доступы, тарифы, даты списаний и способы оплаты — в одном интерфейсе.
+Личная база AI-платформ: назначение, рабочие приёмы, ссылки, доступы, тарифы, даты списаний и способы оплаты — в одном интерфейсе.
 
-[Открыть приложение](https://vladimir-ing.github.io/Base_AI_platform/) · [Архитектура](docs/architecture.md) · [Авторизация](docs/auth.md) · [Облачная синхронизация](docs/cloud-sync.md) · [LLM-помощник](docs/llm-backend.md)
+**AI CORE — продукт ALTERA**, студии цифровых продуктов на базе AI и вайб-кодинга.
+
+[Открыть приложение](https://vladimir-ing.github.io/Base_AI_platform/) · [Об ALTERA](altera.html) · [Основа бренда](docs/altera-brand.md) · [Архитектура](docs/architecture.md) · [Авторизация](docs/auth.md) · [Облачная синхронизация](docs/cloud-sync.md) · [LLM-помощник](docs/llm-backend.md)
 
 ## Быстрый старт
 

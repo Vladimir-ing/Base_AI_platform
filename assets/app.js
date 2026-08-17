@@ -1198,7 +1198,7 @@ function renderLock() {
     chip.className = "lockchip off"; chip.textContent = "🔒 Сейф закрыт";
     chip.title = "Нажмите, чтобы разблокировать";
   }
-  $("#brandSub").textContent = "личный справочник доступов и приёмов" +
+  $("#brandSub").textContent = "личная база AI-платформ" +
     (isSetUp() ? "" : " · сейф ещё не создан");
   $("#storeHint").textContent = storageOk
     ? "Есть локальный кэш и персональная копия в Supabase. Экспорт остаётся дополнительным бэкапом."

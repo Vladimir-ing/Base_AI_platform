@@ -37,4 +37,7 @@ body.auth-pending > :not(.auth-gate):not(script){visibility:hidden}
 .auth-message{margin-top:16px;padding:10px 12px;border-radius:10px;font-size:13px;background:var(--accSoft);color:var(--accTxt)}
 .auth-message.error{background:var(--dangerSoft);color:var(--danger)}
 .auth-message.success{background:var(--okSoft);color:var(--ok)}
+.auth-credit{margin:14px 0 0;text-align:center;color:var(--muted);font-size:12px}
+.auth-credit a{color:var(--accTxt);font-weight:700;text-decoration:none;letter-spacing:.4px}
+.auth-credit a:hover{text-decoration:underline}
 @media (max-width:640px){.cloud-sync,.access-chip{order:9}.auth-session{order:10;max-width:100%;margin-left:auto}.auth-card{padding:20px}.auth-page{padding:16px}}
