@@ -1,0 +1,21 @@
+.altera-page{overflow-x:hidden;background:#090b12}
+.altera-page:before,.altera-page:after{content:"";position:fixed;width:420px;height:420px;border-radius:50%;filter:blur(110px);opacity:.2;pointer-events:none;z-index:-1}
+.altera-page:before{background:#766dff;top:-170px;left:-130px}.altera-page:after{background:#15d8bb;right:-170px;bottom:-190px}
+.altera-wrap{max-width:1080px;margin:0 auto;padding:24px 20px 52px}
+.altera-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.altera-logo{display:flex;align-items:center;gap:11px;color:var(--txt);text-decoration:none;letter-spacing:2.4px}
+.altera-logo span{width:42px;height:42px;display:grid;place-items:center;border:1px solid #817cff;border-radius:13px;background:linear-gradient(145deg,#8b87ff,#4d46b9);box-shadow:0 0 28px rgba(139,135,255,.32);font-weight:800;letter-spacing:0}
+.altera-hero{min-height:570px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:70px 0}
+.altera-kicker,.altera-index{color:#9b97ff;text-transform:uppercase;letter-spacing:1.5px;font-size:12px;font-weight:800}
+.altera-hero h1{max-width:900px;margin:18px 0 22px;font-size:clamp(42px,7vw,78px);line-height:1.02;letter-spacing:-3px;background:linear-gradient(100deg,#fff 20%,#aaa7ff 62%,#67e8d3);-webkit-background-clip:text;background-clip:text;color:transparent}
+.altera-lead{max-width:680px;margin:0;color:var(--muted);font-size:18px;line-height:1.65}
+.altera-actions{margin-top:30px}
+.altera-section{padding:52px 0;border-top:1px solid var(--line)}
+.altera-section h2,.altera-product h2{font-size:30px;margin:8px 0 24px}
+.altera-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.altera-grid article{min-height:180px;padding:23px;border:1px solid var(--line);border-radius:18px;background:rgba(23,27,35,.74)}
+.altera-grid b{font-size:18px}.altera-grid p,.altera-product p{color:var(--muted);line-height:1.65}
+.altera-product{display:flex;align-items:end;justify-content:space-between;gap:24px;margin:20px 0 70px;padding:34px;border:1px solid #454079;border-radius:22px;background:linear-gradient(135deg,rgba(35,34,68,.9),rgba(18,43,48,.72))}
+.altera-product>div{max-width:650px}.altera-product h2{font-size:44px;margin-bottom:10px}.altera-product p{margin:0;font-size:16px}
+.altera-foot{display:flex;justify-content:space-between;gap:15px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;letter-spacing:.5px}
+@media(max-width:720px){.altera-head .btn{padding:8px 10px}.altera-hero{min-height:500px}.altera-hero h1{font-size:clamp(38px,13vw,58px);letter-spacing:-2px}.altera-grid{grid-template-columns:1fr}.altera-product{align-items:flex-start;flex-direction:column;padding:25px}.altera-foot{flex-direction:column}}
