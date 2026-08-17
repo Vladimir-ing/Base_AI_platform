@@ -21,9 +21,26 @@ The payload is limited to 5 MiB. `schema_version` allows future client migration
 
 - On first sign-in, an existing local database is uploaded when no cloud row exists.
 - When a cloud row exists, it is loaded into the local cache.
-- Local saves are debounced and upserted atomically.
+- Local saves are debounced.
+- Every cloud row has a server-controlled `revision`.
+- A save succeeds only when the browser sends the revision it most recently loaded.
+- The database increments the revision and sets `updated_at` with server time in one atomic function call.
+- A stale browser receives `vault_conflict`; it cannot silently overwrite newer data.
+- The conflict dialog lets the user either load the current cloud copy or explicitly replace it with the local copy.
 - Failed writes remain local and are retried when the browser returns online.
-- Returning to the tab checks for a newer cloud copy when there are no unsynchronized local changes.
-- Concurrent edits use last-write-wins behavior.
+- Returning to the tab checks for a newer cloud revision when there are no unsynchronized local changes.
 
 JSON export remains available as an independent backup and migration path.
+
+## Deployment order
+
+The migration `20260817102409_add_user_vault_revisions.sql` must be applied before the matching frontend is published. Until the migration exists in the target Supabase project, the `save_user_vault` RPC is unavailable and the new frontend intentionally keeps changes local instead of falling back to an unsafe unconditional upsert.
+
+After applying the migration, verify:
+
+1. an existing user can load and save normally;
+2. a new user creates revision `1`;
+3. two browsers opened on the same account cannot silently overwrite one another;
+4. choosing the cloud copy clears the local conflict without writing;
+5. choosing the local copy performs a new revision-checked save;
+6. different accounts remain isolated by RLS and the browser cache binding.
