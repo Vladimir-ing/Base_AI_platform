@@ -4,7 +4,7 @@
 
 **AI CORE — продукт ALTERA**, студии цифровых продуктов на базе AI и вайб-кодинга.
 
-[Открыть приложение](https://vladimir-ing.github.io/Base_AI_platform/) · [Об ALTERA](altera.html) · [Основа бренда](docs/altera-brand.md) · [Архитектура](docs/architecture.md) · [Авторизация](docs/auth.md) · [Облачная синхронизация](docs/cloud-sync.md) · [LLM-помощник](docs/llm-backend.md)
+[Стартовая страница](https://vladimir-ing.github.io/Base_AI_platform/) · [Открыть приложение](https://vladimir-ing.github.io/Base_AI_platform/ai-platforms.html) · [Об ALTERA](altera.html) · [Основа бренда](docs/altera-brand.md) · [Архитектура](docs/architecture.md) · [Авторизация](docs/auth.md) · [Облачная синхронизация](docs/cloud-sync.md) · [LLM-помощник](docs/llm-backend.md)
 
 ## Быстрый старт
 

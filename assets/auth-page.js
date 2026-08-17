@@ -6,6 +6,7 @@
   const message = document.getElementById("authMessage");
   const tabs = document.getElementById("authTabs");
   const panels = Array.from(document.querySelectorAll("[data-auth-panel]"));
+  const initialView = params.get("view") === "signup" ? "signup" : "login";
 
   function appUrl() {
     const requested = params.get("next");
@@ -152,6 +153,8 @@
       window.location.replace(appUrl());
     }
   });
+
+  setView(initialView);
 
   const reason = params.get("reason");
   if (reason === "signed_out") showMessage("Вы вышли из аккаунта.", "success");
