@@ -3,6 +3,7 @@
 (async function protectAppRoute() {
   const client = window.supabaseClient;
   const gate = document.getElementById("authGate");
+  let signingOut = false;
 
   function loginUrl(reason) {
     const url = new URL("login.html", window.location.href);
@@ -10,6 +11,10 @@
     url.searchParams.set("next", currentPage);
     if (reason) url.searchParams.set("reason", reason);
     return url.href;
+  }
+
+  function landingUrl() {
+    return new URL("index.html", window.location.href).href;
   }
 
   function redirectToLogin(reason) {
@@ -30,8 +35,14 @@
     if (logoutButton) {
       logoutButton.addEventListener("click", async () => {
         logoutButton.disabled = true;
-        await client.auth.signOut({ scope: "local" });
-        redirectToLogin("signed_out");
+        signingOut = true;
+        const { error: signOutError } = await client.auth.signOut({ scope: "local" });
+        if (signOutError) {
+          signingOut = false;
+          logoutButton.disabled = false;
+          return;
+        }
+        window.location.replace(landingUrl());
       });
     }
 
@@ -55,6 +66,7 @@
   }
 
   client.auth.onAuthStateChange((event, session) => {
+    if (signingOut && event === "SIGNED_OUT") return;
     if (event === "SIGNED_OUT" || (!session && event === "TOKEN_REFRESHED")) {
       redirectToLogin("session_expired");
     }
