@@ -1,0 +1,63 @@
+name: AI CORE mainline auth
+
+on:
+  push:
+    branches:
+      - agent/ai-core-auth-mainline
+  pull_request:
+    paths:
+      - "login.html"
+      - "ai-platforms.html"
+      - "admin.html"
+      - "assets/auth-page.js"
+      - "assets/auth.css"
+      - "assets/route-guard.js"
+      - "assets/supabase-client.js"
+      - "assets/landing.js"
+      - ".github/workflows/ai-core-mainline-auth.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  auth-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check assets/auth-page.js
+          node --check assets/route-guard.js
+          node --check assets/supabase-client.js
+          node --check assets/landing.js
+
+      - name: Check Auth structure
+        run: |
+          grep -q 'signUp' assets/auth-page.js
+          grep -q 'signInWithPassword' assets/auth-page.js
+          grep -q 'resetPasswordForEmail' assets/auth-page.js
+          grep -q 'getUser' assets/route-guard.js
+          grep -q 'signOut' assets/route-guard.js
+          grep -q 'new URL("index.html"' assets/route-guard.js
+          grep -q 'ai-core-lang-v1' assets/auth-page.js
+          grep -q 'ai-core-lang-v1' assets/landing.js
+          grep -q 'ai-platforms-vault-v1' assets/app.js
+
+      - name: Check frontend key safety
+        run: |
+          grep -q 'sb_publishable_' assets/supabase-client.js
+          ! grep -RIE 'service_role|sb_secret_|PASTE_SB_PUBLISHABLE_KEY_HERE' assets --include='*.js'
+
+      - name: Smoke-test Supabase Auth endpoint
+        run: |
+          KEY=$(sed -n 's/.*SUPABASE_PUBLISHABLE_KEY = "\([^"]*\)".*/\1/p' assets/supabase-client.js)
+          test -n "$KEY"
+          echo "::add-mask::$KEY"
+          STATUS=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header "apikey: $KEY" \
+            https://hjbsrcreekzmrpplmrng.supabase.co/auth/v1/settings)
+          test "$STATUS" = "200"
