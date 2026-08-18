@@ -424,7 +424,7 @@ async function pushStateToCloud() {
     saved = true;
     setCloudStatus("saved", "Сохранено", "Данные сохранены в облаке: " + fmtDate(cloudRemoteUpdatedAt));
   } catch (error) {
-    if (error?.message === "vault_conflict" || error?.code === "40001") {
+    if (error?.message === "vault_conflict" || error?.code === "PT409" || error?.code === "40001") {
       cloudConflict = true;
       setCloudStatus("local", "Конфликт изменений", "В облаке уже есть более свежая версия");
       toast("Данные изменились в другом окне или на другом устройстве", {
