@@ -692,9 +692,12 @@ function askConfirm(title, text, okLabel, danger) {
   });
 }
 /* Запрос пароля. confirmField=true → два поля с проверкой совпадения. */
-function askPassword(opt) {
+async function askPassword(opt) {
   const two = !!opt.confirmField;
-  return modal({
+  const searchInput = $("#q");
+  const searchValue = searchInput ? searchInput.value : "";
+  const searchFilter = filter.q;
+  const result = await modal({
     title: opt.title,
     sub: opt.sub,
     body: (opt.note ? "<div class='note" + (opt.noteAcc ? " acc" : "") + "'>" + opt.note + "</div>" : "") +
@@ -719,6 +722,18 @@ function askPassword(opt) {
       });
     }
   });
+
+  // Some browser password managers mistake the global catalog search for a
+  // username field and inject the account email while the vault dialog is open.
+  // A modal blocks legitimate search edits, so always restore the prior query.
+  if (searchInput && (searchInput.value !== searchValue || filter.q !== searchFilter)) {
+    searchInput.value = searchValue;
+    filter.q = searchFilter;
+    renderStats();
+    renderGrid();
+  }
+
+  return result;
 }
 
 /* Сценарии мастер-пароля */
