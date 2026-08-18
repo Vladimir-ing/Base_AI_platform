@@ -28,7 +28,11 @@ assert.match(app, /async function askPassword\(opt\)/);
 assert.match(app, /const searchValue = searchInput \? searchInput\.value : "";/);
 assert.match(app, /filter\.q = searchFilter;/);
 assert.match(app, /renderStats\(\);\s*renderGrid\(\);/);
-assert.match(app, /cloudRevision = data \? Number\(data\.revision\) \|\| 0 : 0/);
+assert.match(app, /lastSyncedRevision: Number\.isInteger\(data\.lastSyncedRevision\)/);
+assert.match(app, /syncMeta\.lastSyncedRevision = cloudRevision;/);
+assert.match(app, /hasStartupRevisionConflict\(syncMeta\.lastSyncedRevision, remoteRevision\)/);
+assert.match(app, /cloudConflict = true;\s*setCloudStatus\("local", "Конфликт изменений"/);
+assert.match(app, /const remoteRevision = data \? Number\(data\.revision\) \|\| 0 : 0/);
 assert.match(app, /applyCloudState\(data\.payload, data\.updated_at, data\.revision\)/);
 assert.doesNotMatch(app, /\.upsert\(\{ user_id: cloudUserId/);
 
@@ -53,5 +57,14 @@ assert.match(httpConflictFix, /errcode = 'PT409', message = 'vault_conflict'/i);
 assert.match(httpConflictFix, /security invoker/i);
 assert.doesNotMatch(httpConflictFix, /errcode = '40001'/i);
 assert.doesNotMatch(httpConflictFix, /security definer/i);
+
+const helperSource = app.match(
+  /function hasStartupRevisionConflict\(baseRevision, remoteRevision\) \{[\s\S]*?\n\}/
+)?.[0];
+assert.ok(helperSource, "startup revision helper must exist");
+const hasStartupRevisionConflict = Function('"use strict"; return (' + helperSource + ');')();
+assert.equal(hasStartupRevisionConflict(4, 4), false);
+assert.equal(hasStartupRevisionConflict(4, 5), true);
+assert.equal(hasStartupRevisionConflict(null, 5), true);
 
 console.log("cloud conflict protection checks: ok");

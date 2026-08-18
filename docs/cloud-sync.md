@@ -38,6 +38,10 @@ The migrations `20260817102409_add_user_vault_revisions.sql`, `20260817111254_fi
 
 After applying the migration, verify:
 
+- a local unsynced copy only auto-saves on startup when its stored base revision still matches the cloud revision;
+- if the cloud revision changed while the browser was closed, startup shows an explicit conflict instead of adopting the new revision and overwriting it;
+- legacy dirty caches without a stored base revision also require an explicit conflict choice;
+
 1. an existing user can load and save normally;
 2. a new user creates revision `1`;
 3. two browsers opened on the same account cannot silently overwrite one another;

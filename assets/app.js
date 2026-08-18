@@ -306,10 +306,13 @@ function readSyncMeta() {
     return {
       userId: typeof data.userId === "string" ? data.userId : "",
       localUpdatedAt: data.localUpdatedAt || "",
-      lastSyncedLocalAt: data.lastSyncedLocalAt || ""
+      lastSyncedLocalAt: data.lastSyncedLocalAt || "",
+      lastSyncedRevision: Number.isInteger(data.lastSyncedRevision) && data.lastSyncedRevision >= 0
+        ? data.lastSyncedRevision
+        : null
     };
   } catch (_) {
-    return { userId: "", localUpdatedAt: "", lastSyncedLocalAt: "" };
+    return { userId: "", localUpdatedAt: "", lastSyncedLocalAt: "", lastSyncedRevision: null };
   }
 }
 
@@ -342,6 +345,10 @@ function localHasUnsyncedChanges() {
   return new Date(syncMeta.localUpdatedAt).getTime() > new Date(syncMeta.lastSyncedLocalAt).getTime();
 }
 
+function hasStartupRevisionConflict(baseRevision, remoteRevision) {
+  return !Number.isInteger(baseRevision) || baseRevision !== remoteRevision;
+}
+
 function resetLocalCacheForUser(userId) {
   state = createSeedState();
   cryptoKey = null;
@@ -349,7 +356,12 @@ function resetLocalCacheForUser(userId) {
   cloudRevision = 0;
   cloudConflict = false;
   cloudConflictDialogOpen = false;
-  syncMeta = { userId: userId, localUpdatedAt: "", lastSyncedLocalAt: "" };
+  syncMeta = {
+    userId: userId,
+    localUpdatedAt: "",
+    lastSyncedLocalAt: "",
+    lastSyncedRevision: null
+  };
   writeSyncMeta();
   save({ markDirty: false, sync: false });
 }
@@ -420,6 +432,7 @@ async function pushStateToCloud() {
     cloudRevision = Number(data.revision) || cloudRevision + 1;
     cloudRemoteUpdatedAt = data.updated_at || "";
     syncMeta.lastSyncedLocalAt = localVersion;
+    syncMeta.lastSyncedRevision = cloudRevision;
     writeSyncMeta();
     saved = true;
     setCloudStatus("saved", "Сохранено", "Данные сохранены в облаке: " + fmtDate(cloudRemoteUpdatedAt));
@@ -449,6 +462,7 @@ function applyCloudState(payload, updatedAt, revision) {
   syncMeta.userId = cloudUserId;
   syncMeta.localUpdatedAt = updatedAt || new Date().toISOString();
   syncMeta.lastSyncedLocalAt = syncMeta.localUpdatedAt;
+  syncMeta.lastSyncedRevision = cloudRevision;
   writeSyncMeta();
   save({ markDirty: false, sync: false });
   document.documentElement.setAttribute("data-theme", state.theme === "light" ? "light" : "dark");
@@ -535,11 +549,12 @@ async function initCloudSync() {
     const { data, error } = await fetchCloudState();
     if (error) throw error;
     const changedDuringInit = syncMeta.localUpdatedAt !== startLocalVersion;
-    const previouslySyncedDirty = !!syncMeta.lastSyncedLocalAt && localHasUnsyncedChanges();
-    cloudRevision = data ? Number(data.revision) || 0 : 0;
+    const hasUnsyncedChanges = changedDuringInit || localHasUnsyncedChanges();
+    const remoteRevision = data ? Number(data.revision) || 0 : 0;
     cloudSyncReady = true;
 
     if (!data) {
+      cloudRevision = 0;
       if (!syncMeta.localUpdatedAt) {
         syncMeta.localUpdatedAt = new Date().toISOString();
         writeSyncMeta();
@@ -548,7 +563,19 @@ async function initCloudSync() {
       return;
     }
 
-    if (changedDuringInit || previouslySyncedDirty) {
+    if (hasUnsyncedChanges && hasStartupRevisionConflict(syncMeta.lastSyncedRevision, remoteRevision)) {
+      cloudRevision = Number.isInteger(syncMeta.lastSyncedRevision) ? syncMeta.lastSyncedRevision : 0;
+      cloudConflict = true;
+      setCloudStatus("local", "Конфликт изменений", "Облачная версия изменилась после последней синхронизации");
+      toast("Обнаружены локальные и более свежие облачные изменения", {
+        label: "Разрешить",
+        fn: resolveCloudConflict
+      });
+      return;
+    }
+
+    if (hasUnsyncedChanges) {
+      cloudRevision = remoteRevision;
       await pushStateToCloud();
       return;
     }
