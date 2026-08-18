@@ -10,12 +10,17 @@ const ambiguityFix = readFileSync(
   "supabase/migrations/20260817111254_fix_user_vault_revision_ambiguity.sql",
   "utf8"
 );
+const httpConflictFix = readFileSync(
+  "supabase/migrations/20260818022935_use_http_vault_conflict.sql",
+  "utf8"
+);
 
 assert.match(app, /const STORE_KEY = "ai-platforms-vault-v1";/);
 assert.match(app, /let cloudRevision = 0;/);
 assert.match(app, /p_expected_revision: cloudRevision/);
 assert.match(app, /\.select\("payload, schema_version, updated_at, revision"\)/);
 assert.match(app, /error\?\.message === "vault_conflict"/);
+assert.match(app, /error\?\.code === "PT409"/);
 assert.match(app, /async function resolveCloudConflict\(\)/);
 assert.match(app, /if \(!cloudConflict \|\| cloudConflictDialogOpen\) return/);
 assert.match(app, /box\.onclick = cloudConflict \? resolveCloudConflict : null/);
@@ -39,5 +44,10 @@ assert.match(ambiguityFix, /vault\.revision = p_expected_revision/i);
 assert.match(ambiguityFix, /returning vault\.revision, vault\.updated_at/i);
 assert.match(ambiguityFix, /security invoker/i);
 assert.doesNotMatch(ambiguityFix, /security definer/i);
+
+assert.match(httpConflictFix, /errcode = 'PT409', message = 'vault_conflict'/i);
+assert.match(httpConflictFix, /security invoker/i);
+assert.doesNotMatch(httpConflictFix, /errcode = '40001'/i);
+assert.doesNotMatch(httpConflictFix, /security definer/i);
 
 console.log("cloud conflict protection checks: ok");
