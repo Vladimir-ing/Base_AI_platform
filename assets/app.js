@@ -87,6 +87,9 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp
 const uid = () => "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const nz = v => (v == null ? "" : String(v));
+const safeEntityId = (value, fallback) => window.AICoreSecurity.safeEntityId(value, fallback);
+const safeExternalUrl = value => window.AICoreSecurity.safeExternalUrl(value);
+const isSafeExternalUrl = value => window.AICoreSecurity.isSafeExternalUrl(value);
 
 function toast(msg, action) {
   const t = $("#toast");
@@ -147,12 +150,16 @@ function blank() {
 function normalize(p) {
   const b = blank();
   const o = Object.assign(b, p || {});
-  o.id = p && p.id ? p.id : b.id;
+  o.id = safeEntityId(p && p.id, b.id);
   o.account = Object.assign(b.account, (p && p.account) || {});
   o.plan = Object.assign(b.plan, (p && p.plan) || {});
+  o.url = safeExternalUrl(o.url);
+  o.urlLogin = safeExternalUrl(o.urlLogin);
+  o.urlBilling = safeExternalUrl(o.urlBilling);
+  o.plan.paymentId = safeEntityId(o.plan.paymentId, "");
   o.tips = Array.isArray(o.tips) ? o.tips.filter(Boolean) : (o.tips ? String(o.tips).split("\n").filter(Boolean) : []);
   o.tags = Array.isArray(o.tags) ? o.tags.filter(Boolean) : (o.tags ? String(o.tags).split(",").map(s => s.trim()).filter(Boolean) : []);
-  o.rating = Number(o.rating) || 0;
+  o.rating = Math.max(0, Math.min(5, Math.round(Number(o.rating) || 0)));
   o.usage = USAGE_OPTIONS.includes(o.usage) ? o.usage : "";
   o.pinned = !!o.pinned;
   if (CATS.every(c => c[0] !== o.category)) o.category = "Прочее";
@@ -167,7 +174,7 @@ function normalize(p) {
    ================================================================== */
 function normPayment(x) {
   return {
-    id: (x && x.id) || "pay" + Math.random().toString(36).slice(2, 9),
+    id: safeEntityId(x && x.id, "pay" + Math.random().toString(36).slice(2, 9)),
     name: nz(x && x.name).trim(),
     note: nz(x && x.note).trim(),
     currency: (x && CURRENCIES.includes(x.currency)) ? x.currency : "₽",
@@ -1304,7 +1311,7 @@ function renderGrid() {
   $("#grid").innerHTML = list.map(p => {
     const pr = priceLabel(p);
     const link = p.urlLogin || p.url;
-    return "<div class='cell'><button class='tile' type='button' data-id='" + p.id + "'>" +
+    return "<div class='cell'><button class='tile' type='button' data-id='" + esc(p.id) + "'>" +
       "<div class='row1'>" + iconHTML(p) +
         "<span style='min-width:0'><h3>" + esc(p.name) + "</h3><p class='cat'>" +
         (CAT_ICON[p.category] || "📦") + " " + esc(p.category) + "</p></span></div>" +
@@ -1320,7 +1327,7 @@ function renderGrid() {
           "title='Открыть " + (p.urlLogin ? "личный кабинет" : "сайт") + ": " + esc(link) + "' " +
           "aria-label='Открыть " + esc(p.name) + " в новой вкладке'>⇗</a>"
         : "") +
-      "<button class='kill' type='button' data-kill='" + p.id + "' title='Удалить «" + esc(p.name) + "» из базы' " +
+      "<button class='kill' type='button' data-kill='" + esc(p.id) + "' title='Удалить «" + esc(p.name) + "» из базы' " +
         "aria-label='Удалить " + esc(p.name) + "'>✕</button></div>";
   }).join("") +
     "<button class='tile add' type='button' id='addTile'><span class='plus'>+</span>" +
@@ -1459,7 +1466,7 @@ async function openCard(id) {
   else if (p.plan.renewsOn) kv.push(["Дата продления", fmtDate(p.plan.renewsOn)]);
   const pe = payEntity(p.plan.paymentId);
   if (pe && pe.kind === "service") kv.push(["Чем платим",
-    "<button class='btn sm' type='button' data-act='goPay' data-id='" + pe.id + "'>💳 " + esc(pe.name) + " →</button>", true]);
+    "<button class='btn sm' type='button' data-act='goPay' data-id='" + esc(pe.id) + "'>💳 " + esc(pe.name) + " →</button>", true]);
   else if (pe) kv.push(["Чем платим", pe.name + (pe.note ? " — " + pe.note : "")]);
   if (p.usage) kv.push(["Использование", p.usage]);
   if (monthlyCost(p)) kv.push(["Ценность подписки", valueVerdict(p)]);
@@ -1474,7 +1481,7 @@ async function openCard(id) {
     h += "<div class='sect'><h4>Через него оплачивается</h4>" +
       (u.count
         ? "<div class='linkrow'>" + u.platforms.map(x =>
-            "<button class='btn sm' type='button' data-act='goPay' data-id='" + x.id + "'>" +
+            "<button class='btn sm' type='button' data-act='goPay' data-id='" + esc(x.id) + "'>" +
             (CAT_ICON[x.category] || "📦") + " " + esc(x.name) + (priceLabel(x) ? " · " + esc(priceLabel(x)) : "") + "</button>").join("") +
           "</div><p style='margin:9px 0 0;color:var(--muted);font-size:13.5px'>Итого: " +
           (u.money || "без оплаты") + " в месяц</p>"
@@ -1623,14 +1630,27 @@ async function saveEdit() {
   const secState = $("#cardOv").dataset.secstate;
   const name = $("#fName").value.trim();
   if (!name) { toast("Название обязательно"); $("#fName").focus(); return; }
+  const urlFields = [
+    ["#fUrl", "ссылку на сайт"],
+    ["#fUrlLogin", "ссылку на вход"],
+    ["#fUrlBilling", "ссылку на оплату"]
+  ];
+  for (const [selector, label] of urlFields) {
+    const field = $(selector);
+    if (!isSafeExternalUrl(field.value)) {
+      toast("Проверьте " + label + ": разрешены только полные http:// или https:// адреса");
+      field.focus();
+      return;
+    }
+  }
 
   const p = isNew ? blank() : byId(openId);
   if (!p) return;
   p.name = name;
   p.category = $("#fCat").value;
-  p.url = $("#fUrl").value.trim();
-  p.urlLogin = $("#fUrlLogin").value.trim();
-  p.urlBilling = $("#fUrlBilling").value.trim();
+  p.url = safeExternalUrl($("#fUrl").value);
+  p.urlLogin = safeExternalUrl($("#fUrlLogin").value);
+  p.urlBilling = safeExternalUrl($("#fUrlBilling").value);
   p.status = $("#fStatusF").value;
   p.purpose = $("#fPurpose").value.trim();
   p.strengths = $("#fStrengths").value.trim();
@@ -1907,9 +1927,10 @@ function askServiceFields() {
         const n = $("#svcName").value.trim();
         if (!n) return "Введите название.";
         if (state.platforms.some(p => p.name.toLowerCase() === n.toLowerCase())) return "Платформа с таким названием уже есть в базе.";
+        if (!isSafeExternalUrl($("#svcUrl").value)) return "Сайт должен начинаться с http:// или https://.";
         return null;
       },
-      value: () => ({ name: $("#svcName").value.trim(), url: $("#svcUrl").value.trim(), note: $("#svcNote").value.trim() })
+      value: () => ({ name: $("#svcName").value.trim(), url: safeExternalUrl($("#svcUrl").value), note: $("#svcNote").value.trim() })
     }]
   });
 }
@@ -1924,9 +1945,9 @@ async function showPayments() {
           "<br><span style='color:var(--muted);font-size:12.5px'>" +
             (u.count ? "через него: " + u.count + " платф. · " + (u.money || "без оплаты") : "пока ничего не оплачивается") +
             (s.secret ? " · 🔑" : "") + "</span></span>" +
-        "<button class='btn sm' type='button' data-pact='pick' data-id='" + s.id + "'>Показать</button>" +
-        "<button class='btn sm' type='button' data-pact='card' data-id='" + s.id + "'>Карточка</button>" +
-        "<button class='btn sm danger' type='button' data-pact='delsvc' data-id='" + s.id + "'>Удалить</button>" +
+        "<button class='btn sm' type='button' data-pact='pick' data-id='" + esc(s.id) + "'>Показать</button>" +
+        "<button class='btn sm' type='button' data-pact='card' data-id='" + esc(s.id) + "'>Карточка</button>" +
+        "<button class='btn sm danger' type='button' data-pact='delsvc' data-id='" + esc(s.id) + "'>Удалить</button>" +
       "</div>";
     }).join("");
 
@@ -1937,9 +1958,9 @@ async function showPayments() {
           (m.note ? "<br><span style='color:var(--muted);font-size:12.5px'>" + esc(m.note) + "</span>" : "") +
           "<br><span style='color:var(--muted);font-size:12.5px'>" +
             (u.count ? u.count + " платф. · " + (u.money || "без оплаты") : "не используется") + "</span></span>" +
-        "<button class='btn sm' type='button' data-pact='pick' data-id='" + m.id + "'>Показать</button>" +
-        "<button class='btn sm' type='button' data-pact='edit' data-id='" + m.id + "'>Изменить</button>" +
-        "<button class='btn sm danger' type='button' data-pact='del' data-id='" + m.id + "'>Удалить</button>" +
+        "<button class='btn sm' type='button' data-pact='pick' data-id='" + esc(m.id) + "'>Показать</button>" +
+        "<button class='btn sm' type='button' data-pact='edit' data-id='" + esc(m.id) + "'>Изменить</button>" +
+        "<button class='btn sm danger' type='button' data-pact='del' data-id='" + esc(m.id) + "'>Удалить</button>" +
       "</div>";
     }).join("");
 

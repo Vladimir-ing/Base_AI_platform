@@ -3,13 +3,16 @@ name: AI CORE cloud sync isolation
 on:
   push:
     branches:
+      - main
       - agent/cloud-sync-account-isolation
   pull_request:
     paths:
       - "assets/app.js"
+      - "assets/security-utils.js"
       - "supabase/migrations/**"
       - "tools/check-cloud-isolation.mjs"
       - "tools/check-cloud-conflicts.mjs"
+      - "tools/check-import-safety.mjs"
       - ".github/workflows/cloud-sync-isolation.yml"
 
 permissions:
@@ -29,3 +32,5 @@ jobs:
         run: node tools/check-cloud-isolation.mjs
       - name: Check optimistic cloud concurrency contract
         run: node tools/check-cloud-conflicts.mjs
+      - name: Check imported data safety contract
+        run: node tools/check-import-safety.mjs

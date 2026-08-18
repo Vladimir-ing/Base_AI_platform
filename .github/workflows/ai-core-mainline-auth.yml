@@ -3,6 +3,7 @@ name: AI CORE mainline auth
 on:
   push:
     branches:
+      - main
       - agent/ai-core-auth-mainline
   pull_request:
     paths:
@@ -13,6 +14,7 @@ on:
       - "assets/auth.css"
       - "assets/route-guard.js"
       - "assets/supabase-client.js"
+      - "assets/security-utils.js"
       - "assets/landing.js"
       - ".github/workflows/ai-core-mainline-auth.yml"
 
@@ -33,6 +35,7 @@ jobs:
           node --check assets/auth-page.js
           node --check assets/route-guard.js
           node --check assets/supabase-client.js
+          node --check assets/security-utils.js
           node --check assets/landing.js
 
       - name: Check Auth structure
@@ -51,6 +54,7 @@ jobs:
         run: |
           grep -q 'sb_publishable_' assets/supabase-client.js
           ! grep -RIE 'service_role|sb_secret_|PASTE_SB_PUBLISHABLE_KEY_HERE' assets --include='*.js'
+          test "$(grep -Rl 'sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC' --include='*.html' . | wc -l)" = "3"
 
       - name: Smoke-test Supabase Auth endpoint
         run: |
