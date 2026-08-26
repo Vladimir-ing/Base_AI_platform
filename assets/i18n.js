@@ -946,7 +946,43 @@
     "Тестируйте сценарий по шагам, прежде чем включать по расписанию.":
       "Test a scenario step by step before putting it on a schedule.",
     "Сервис, через который оплачиваются другие платформы.":
-      "A service used to pay for other platforms."
+      "A service used to pay for other platforms.",
+
+    /* OpenRouter */
+    "Единый API-шлюз к сотням моделей разных вендоров: один ключ и один счёт вместо кучи аккаунтов.":
+      "A single API gateway to hundreds of models from different vendors: one key and one balance instead of a pile of accounts.",
+    "Один баланс и один ключ для OpenAI, Anthropic, Google, Meta и других; прозрачная оплата за токены, есть бесплатные модели; удобное сравнение моделей по цене и качеству.":
+      "One balance and one key for OpenAI, Anthropic, Google, Meta and others; transparent per-token billing, free models available; easy side-by-side model comparison.",
+    "Пополняйте баланс и платите по факту за токены — подписка на каждую модель не нужна.":
+      "Top up the balance and pay per token as you go — no per-model subscriptions needed.",
+    "API-ключ храните в сейфе этой базы, а не в коде проекта.":
+      "Keep the API key in this database's vault, not in your project's code.",
+    "Модели с пометкой «:free» ограничены по лимитам, но для тестов и черновиков их хватает.":
+      "Models marked “:free” are rate-limited, but enough for tests and drafts.",
+
+    /* MiMo (Xiaomi) */
+    "Агентная платформа Xiaomi на моделях MiMo: чат, код и пошаговые задачи с вызовом инструментов.":
+      "Xiaomi's agentic platform powered by MiMo models: chat, code and step-by-step tasks with tool use.",
+    "Быстрые открытые модели линейки MiMo-V2, агентный режим, API и подписка на токены; сильное соотношение цены и качества.":
+      "Fast open-weight MiMo-V2 model family, agentic mode, API and a token subscription; strong price-to-performance ratio.",
+    "Один аккаунт Xiaomi открывает и чат, и API — ключ держите в сейфе этой базы.":
+      "One Xiaomi account unlocks both the chat and the API — keep the key in this database's vault.",
+    "Token Plan выгоден при регулярных агентных сценариях: оплата подпиской, а не по токенам.":
+      "Token Plan pays off for regular agentic workloads: a flat subscription instead of per-token billing.",
+    "Flash берите для рутины и быстрых ответов, Pro — для сложных задач.":
+      "Pick Flash for routine quick answers, Pro for demanding tasks.",
+
+    /* GLM (Z.ai) */
+    "Чат и API на моделях GLM от Z.ai: сильный код, агентные задачи и рассуждения.":
+      "Chat and API on Z.ai's GLM models: strong coding, agentic tasks and reasoning.",
+    "Открытые веса моделей, низкие цены; Coding Plan подключается к Claude Code, Cline и другим инструментам вместо оплаты по токенам.":
+      "Open model weights and low prices; the Coding Plan plugs into Claude Code, Cline and other tools instead of per-token billing.",
+    "Если много кодите — берите Coding Plan (от $18/мес): квоты вместо токенов, лимиты на 5 часов и на неделю.":
+      "If you code a lot, take the Coding Plan (from $18/mo): quotas instead of tokens, with 5-hour and weekly limits.",
+    "Подписку и API-ключ удобнее вести отдельными записями, чтобы не смешивать оплату.":
+      "Track the subscription and the API key as separate entries to keep billing clear.",
+    "Аккаунт общий для чата z.ai и API — ключ храните в сейфе.":
+      "One account for both the z.ai chat and the API — keep the key in the vault."
   });
 
   /* ═══ Теги и одиночные слова сида ═══ */

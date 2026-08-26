@@ -52,7 +52,7 @@
 
     const appScript = document.createElement("script");
     const appSource = document.body.dataset.appScript || "assets/app.js";
-    appScript.src = appSource + (appSource.includes("?") ? "&" : "?") + "v=20260818-0400";
+    appScript.src = appSource + (appSource.includes("?") ? "&" : "?") + "v=20260827-0100";
     appScript.async = false;
     appScript.onerror = () => {
       if (gate) {
