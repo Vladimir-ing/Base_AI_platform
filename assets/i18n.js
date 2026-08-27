@@ -105,7 +105,7 @@
     "Сменить тему": "Switch theme",
     "Инструкция по сайту": "Site guide",
     "Ничего не найдено. Сбросьте поиск или фильтры.": "Nothing found. Clear the search or filters.",
-    "AI CORE — продукт": "AI CORE — a product of",
+    "AI CORE — разработка сайта:": "AI CORE — built by",
     "Вход": "Sign-in",
     "Сайт": "Website"
   });
