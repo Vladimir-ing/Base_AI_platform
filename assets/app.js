@@ -1871,14 +1871,36 @@ function deletePlatform(id) {
 
 function addMissingSeed() {
   const have = new Set(state.platforms.map(p => p.name.toLowerCase()));
-  let n = 0;
+  const urlKey = u => (u || "").trim().toLowerCase().replace(/\/+$/, "");
+  const byUrl = new Map(state.platforms.filter(p => p.url).map(p => [urlKey(p.url), p]));
+  let added = 0, fixed = 0;
   SEED.forEach(s => {
     if (have.has(s.name.toLowerCase())) return;
+    const twin = byUrl.get(urlKey(s.url));
+    if (twin) {
+      /* ссылка совпадает, а тексты испорчены (например, внешним переводчиком
+         страницы) — возвращаем каталожные тексты, пользовательские поля
+         (цены, статусы, заметки, секреты) не трогаем */
+      twin.name = s.name;
+      twin.category = s.category;
+      twin.purpose = s.purpose;
+      twin.strengths = s.strengths;
+      twin.tips = [...s.tips];
+      twin.tags = [...s.tags];
+      if (s.pinned) twin.pinned = true;
+      have.add(s.name.toLowerCase());
+      fixed++;
+      return;
+    }
     state.platforms.push(normalize(s));
-    n++;
+    have.add(s.name.toLowerCase());
+    added++;
   });
   save(); render();
-  toast(n ? "Добавлено платформ: " + n : "Все платформы каталога уже в базе");
+  toast(added && fixed ? "Добавлено: " + added + " · восстановлено: " + fixed
+    : added ? "Добавлено платформ: " + added
+    : fixed ? "Восстановлено записей каталога: " + fixed
+    : "Все платформы каталога уже в базе");
 }
 
 /* ==================================================================
