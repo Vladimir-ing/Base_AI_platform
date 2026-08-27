@@ -292,6 +292,12 @@ button { font-family: inherit; }
 .footer-links { display: flex; gap: 26px; }
 .footer-links a { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color var(--transition); }
 .footer-links a:hover { color: var(--text-secondary); }
+/* Кредит разработчика ALTERA — фирменный знак и цвет Altera (исключение из палитры AI CORE) */
+.altera-credit { display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+.altera-credit .a-mark { width: 15px; height: 15px; flex: none; display: grid; place-items: center; border: 1px solid #817cff; border-radius: 5px; background: linear-gradient(145deg, #8b87ff, #4d46b9); color: #fff; font-weight: 800; font-size: 9px; line-height: 1; }
+.altera-credit b { color: #8b87ff; font-weight: 800; letter-spacing: 0.3px; }
+.altera-credit:hover b { text-decoration: underline; }
+.altera-credit .ext { color: var(--text-muted); font-weight: 400; }
 
 /* ── Мобильная версия ──────────────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -526,7 +532,7 @@ button { font-family: inherit; }
       </div>
       <div class="footer-links">
         <a href="guide.html"><span data-lang="ru">Руководство</span><span data-lang="en">Guide</span></a>
-        <a href="altera.html"><span data-lang="ru">Разработка сайта — Altera</span><span data-lang="en">Built by Altera</span></a>
+        <a href="altera.html" class="altera-credit" aria-label="Разработка сайта — Altera"><span class="a-mark" aria-hidden="true">A</span><b>Altera</b><span class="ext" aria-hidden="true">↗</span></a>
         <a href="login.html?view=login"><span data-lang="ru">Войти</span><span data-lang="en">Log in</span></a>
       </div>
     </div>

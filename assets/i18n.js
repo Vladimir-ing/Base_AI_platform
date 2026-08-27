@@ -106,6 +106,7 @@
     "Инструкция по сайту": "Site guide",
     "Ничего не найдено. Сбросьте поиск или фильтры.": "Nothing found. Clear the search or filters.",
     "AI CORE — разработка сайта:": "AI CORE — built by",
+    "AI CORE — разработка сайта": "AI CORE — built by",
     "Вход": "Sign-in",
     "Сайт": "Website"
   });
