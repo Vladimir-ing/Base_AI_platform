@@ -43,13 +43,12 @@ h1,h2,h3,h4{margin:0;line-height:1.25;font-family:var(--font-heading)}
 .product-credit a:hover{text-decoration:underline}
 
 /* Фирменный кредит разработчика ALTERA — намеренное исключение из палитры
-   AI CORE: знак и цвет самого Altera (см. altera.html) */
+   AI CORE: настоящий логотип и цвет самого Altera (altera-lending) */
 .altera-credit{display:inline-flex;align-items:center;gap:5px;text-decoration:none;vertical-align:middle}
-.altera-credit .a-mark{width:15px;height:15px;flex:none;display:grid;place-items:center;border:1px solid #817cff;border-radius:5px;background:linear-gradient(145deg,#8b87ff,#4d46b9);color:#fff;font-weight:800;font-size:9px;line-height:1}
-.altera-credit b{color:#8b87ff;font-weight:800;letter-spacing:.3px}
-.altera-credit:hover b{text-decoration:underline}
+.altera-credit img{height:15px;width:auto;display:block}
+.altera-credit:hover img{opacity:.85}
 .altera-credit .ext{color:var(--muted);font-weight:400}
-:root[data-theme=light] .altera-credit b{color:#4d46b9}
+:root[data-theme=light] .altera-credit img{filter:brightness(.55)}
 .search{position:relative;flex:1 1 220px;max-width:320px}
 .search input{width:100%;padding:9px 12px 9px 32px;border-radius:10px;border:1px solid var(--line-strong);background:var(--panel);color:var(--txt)}
 .search span{position:absolute;left:10px;top:8px;opacity:.5;font-size:14px}
