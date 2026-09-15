@@ -123,7 +123,7 @@
 
 | Где | Что это |
 |---|---|
-| `C:\Users\PC\Documents\Z.Ai\ALTERA\AI_CORE` | рабочая папка на компьютере |
+| `C:\Users\PC\Documents\ALTERA\AI_CORE` | рабочая папка на компьютере |
 | https://github.com/Vladimir-ing/Base_AI_platform | GitHub, отсюда собирается живой сайт |
 
 **Правило: любая правка должна попасть в оба места.** Живой сайт
@@ -134,14 +134,14 @@
 ### Забрать изменения с GitHub в папку
 
 ```bash
-cd "C:\Users\PC\Documents\Z.Ai\ALTERA\AI_CORE"
+cd "C:\Users\PC\Documents\ALTERA\AI_CORE"
 git pull
 ```
 
 Если папка пустая или в ней нет `.git`, забери проект целиком:
 
 ```bash
-cd "C:\Users\PC\Documents\Z.Ai\ALTERA"
+cd "C:\Users\PC\Documents\ALTERA"
 git clone https://github.com/Vladimir-ing/Base_AI_platform.git
 ```
 
