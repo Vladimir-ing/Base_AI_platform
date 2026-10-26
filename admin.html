@@ -9,9 +9,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/AI-CORE-favicon-32.png">
 <link rel="apple-touch-icon" href="assets/AI-CORE-apple-touch.png">
 <meta name="theme-color" content="#050706">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/fonts/faces.css">
+<link rel="stylesheet" href="cookie.css">
 <link rel="stylesheet" href="assets/app.css?v=20260827-1800">
 <link rel="stylesheet" href="assets/auth.css?v=20260827-1600">
 <link rel="stylesheet" href="assets/admin.css?v=20260827-1600">
@@ -47,5 +46,15 @@
 <script src="assets/supabase-client.js?v=20260817-0835"></script>
 <script src="assets/i18n.js?v=20260827-1700"></script>
 <script src="assets/route-guard.js?v=20260827-0200"></script>
+
+<div id="cookie-banner" class="cookie-banner" data-key="aicore-cookie" hidden>
+  <p>Вход, язык и личная база работают без этого окна. Аналитика и реклама не включаются, пока вы не нажмёте «Принять». Сейчас таких скриптов нет. <a href="privacy.html">Политика и cookie</a>.</p>
+  <div class="cookie-banner__row">
+    <button type="button" data-cookie="reject">Отклонить</button>
+    <button type="button" data-cookie="accept">Принять</button>
+  </div>
+</div>
+<script src="cookie.js" defer></script>
+
 </body>
 </html>

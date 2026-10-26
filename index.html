@@ -15,9 +15,8 @@
 <meta property="og:image" content="https://base-ai-platform.vercel.app/assets/AI-CORE-og-image.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://base-ai-platform.vercel.app/">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/fonts/faces.css">
+<link rel="stylesheet" href="cookie.css">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -655,5 +654,15 @@ button { font-family: inherit; }
   });
 })();
 </script>
+
+<div id="cookie-banner" class="cookie-banner" data-key="aicore-cookie" hidden>
+  <p>Вход, язык и личная база работают без этого окна. Аналитика и реклама не включаются, пока вы не нажмёте «Принять». Сейчас таких скриптов нет. <a href="privacy.html">Политика и cookie</a>.</p>
+  <div class="cookie-banner__row">
+    <button type="button" data-cookie="reject">Отклонить</button>
+    <button type="button" data-cookie="accept">Принять</button>
+  </div>
+</div>
+<script src="cookie.js" defer></script>
+
 </body>
 </html>
