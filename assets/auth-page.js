@@ -28,7 +28,8 @@
       signedOut: "Вы вышли из аккаунта.",
       sessionExpired: "Сессия завершена. Войдите снова.",
       authRequired: "Для доступа необходимо войти.",
-      authUnavailable: "Не удалось проверить сессию. Попробуйте войти снова."
+      authUnavailable: "Не удалось проверить сессию. Попробуйте войти снова.",
+      needConsent: "Отметьте согласие на обработку персональных данных. Галочка не стоит заранее."
     },
     en: {
       invalidCredentials: "Incorrect email or password.",
@@ -43,7 +44,8 @@
       signedOut: "You have signed out.",
       sessionExpired: "Your session has ended. Sign in again.",
       authRequired: "Sign in to continue.",
-      authUnavailable: "The session could not be verified. Please sign in again."
+      authUnavailable: "The session could not be verified. Please sign in again.",
+      needConsent: "Tick the consent box. It is not ticked for you."
     }
   };
 
@@ -146,6 +148,13 @@
     window.location.replace(appUrl());
   });
 
+  function requireConsent(form) {
+    const box = form.querySelector('input[name="consent"]');
+    if (!box || box.checked) return true;
+    showMessage("needConsent", "error");
+    return false;
+  }
+
   document.getElementById("signupForm").addEventListener("submit", async event => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -153,6 +162,7 @@
     const email = String(values.get("email") || "").trim();
     const password = String(values.get("password") || "");
     clearMessage();
+    if (!requireConsent(form)) return;
     setBusy(form, true);
     const { data, error } = await client.auth.signUp({
       email,
@@ -178,6 +188,7 @@
     const values = new FormData(form);
     const email = String(values.get("email") || "").trim();
     clearMessage();
+    if (!requireConsent(form)) return;
     setBusy(form, true);
     const { error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: new URL("login.html", window.location.href).href
